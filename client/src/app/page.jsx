@@ -19,7 +19,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="/order"
+                href="/login"
                 className="px-8 py-4 bg-white text-stevens-maroon rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
                 Place an Order →
