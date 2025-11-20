@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <div className="-mt-8">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-stevens-maroon via-stevens-maroon-dark to-stevens-maroon rounded-3xl mb-16">
+      <section className="relative overflow-hidden bg-linear-to-br from-stevens-maroon via-stevens-maroon-dark to-stevens-maroon rounded-3xl mb-16">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIuNSIgb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-10"></div>
         <div className="relative px-6 py-24 md:py-32 text-center">
           <div className="max-w-4xl mx-auto">
@@ -41,9 +41,7 @@ export default function Home() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Services
           </h2>
-          <p className="text-xl text-gray-600">
-            Details coming soon
-          </p>
+          <p className="text-xl text-gray-600">Details coming soon</p>
         </div>
       </section>
     </div>

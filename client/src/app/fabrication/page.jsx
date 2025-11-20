@@ -14,7 +14,7 @@ export default function FabricationPage() {
       <div className="space-y-8">
         {/* Cheqroom Section */}
         <div className="card overflow-hidden">
-          <div className="bg-gradient-to-r from-stevens-maroon to-stevens-maroon-dark p-6">
+          <div className="bg-linear-to-r from-stevens-maroon to-stevens-maroon-dark p-6">
             <h2 className="text-2xl font-bold text-white">Cheqroom</h2>
           </div>
           <div className="p-6 space-y-6">
@@ -39,7 +39,7 @@ export default function FabricationPage() {
 
         {/* Printing Section */}
         <div className="card overflow-hidden">
-          <div className="bg-gradient-to-r from-stevens-maroon to-stevens-maroon-dark p-6">
+          <div className="bg-linear-to-r from-stevens-maroon to-stevens-maroon-dark p-6">
             <h2 className="text-2xl font-bold text-white">Printing</h2>
           </div>
           <div className="p-6 space-y-8">
@@ -93,7 +93,7 @@ export default function FabricationPage() {
 
         {/* Fabrication Section */}
         <div className="card overflow-hidden">
-          <div className="bg-gradient-to-r from-stevens-maroon to-stevens-maroon-dark p-6">
+          <div className="bg-linear-to-r from-stevens-maroon to-stevens-maroon-dark p-6">
             <h2 className="text-2xl font-bold text-white">Fabrication</h2>
           </div>
           <div className="p-6 space-y-8">
