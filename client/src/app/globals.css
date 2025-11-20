@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Stevens Brand Colors */
+  --stevens-maroon: #9d1535;
+  --stevens-maroon-dark: #7d1029;
+  --stevens-maroon-light: #c41d45;
+  --stevens-gray: #949594;
+  --stevens-gray-light: #e5e5e5;
+  --stevens-gray-dark: #4a4a4a;
+
+  /* Layout Colors */
+  --background: #f9fafb;
+  --foreground: #1a1a1a;
+  --border-color: #e5e7eb;
+  --card-background: #ffffff;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-stevens-maroon: var(--stevens-maroon);
+  --color-stevens-maroon-dark: var(--stevens-maroon-dark);
+  --color-stevens-maroon-light: var(--stevens-maroon-light);
+  --color-stevens-gray: var(--stevens-gray);
+  --color-stevens-gray-light: var(--stevens-gray-light);
+  --color-stevens-gray-dark: var(--stevens-gray-dark);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Utility classes for Stevens branding */
+.text-stevens-maroon {
+  color: var(--stevens-maroon);
+}
+
+.bg-stevens-maroon {
+  background-color: var(--stevens-maroon);
+}
+
+.border-stevens-maroon {
+  border-color: var(--stevens-maroon);
+}
+
+.hover\:bg-stevens-maroon-dark:hover {
+  background-color: var(--stevens-maroon-dark);
+}
+
+.hover\:text-stevens-maroon:hover {
+  color: var(--stevens-maroon);
+}
+
+/* Custom Card Styles */
+.card {
+  background: var(--card-background);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: translateY(-2px);
+}
+
+.card-feature {
+  background: linear-gradient(135deg, var(--stevens-maroon) 0%, var(--stevens-maroon-dark) 100%);
+  color: white;
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: var(--stevens-maroon);
+  color: white;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--stevens-maroon-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--stevens-maroon);
+  outline-offset: 2px;
 }
