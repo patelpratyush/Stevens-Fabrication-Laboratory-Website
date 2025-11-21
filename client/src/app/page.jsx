@@ -25,7 +25,7 @@ export default function Home() {
                 Place an Order →
               </a>
               <a
-                href="/fabrication"
+                href="/services"
                 className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white border-2 border-white rounded-xl font-bold text-lg hover:bg-white/20 transition-all"
               >
                 View Services

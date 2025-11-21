@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function FabricationPage() {
+export default function ServicesPage() {
   const [openSections, setOpenSections] = useState({
     // Cheqroom sections
     whatIs: true,
