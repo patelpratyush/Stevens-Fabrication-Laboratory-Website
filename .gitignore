@@ -28,7 +28,7 @@ package-lock.json
 *.pem
 
 # IDE and tools
-.vscode
+.vscode/
 .claude
 CLAUDE.md
 claude.md
