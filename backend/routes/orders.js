@@ -8,15 +8,15 @@ const router = express.Router();
 router.get('/', authenticate, async (req, res) => {
   try {
     const ordersCollection = await orders();
-    const filter = req.user.role === 'staff' 
-      ? {} 
+    const filter = req.user.role === 'staff'
+      ? {}
       : { firebaseUid: req.firebaseUid };
-    
+
     const ordersList = await ordersCollection
       .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
-    
+
     res.json({ orders: ordersList });
   } catch (error) {
     res.status(500).json({ error: error.message });

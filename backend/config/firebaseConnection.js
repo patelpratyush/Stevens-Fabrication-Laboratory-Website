@@ -1,32 +1,31 @@
 import admin from 'firebase-admin';
-import { settings } from './settings.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-// Temporarily skip Firebase - uncomment when you have credentials
-/*
-const serviceAccount = {
-  type: "service_account",
-  project_id: "your-project-id",
-  private_key_id: "your-private-key-id",
-  private_key: "your-private-key",
-  client_email: "your-client-email",
-  client_id: "your-client-id",
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: "your-cert-url"
-};
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: settings.firebase.storageBucket
-});
+let firebaseAuth = null;
+let firebaseStorage = null;
 
-export const firebaseAuth = admin.auth();
-export const firebaseStorage = admin.storage().bucket();
-*/
+try {
+  // Try to load service account key
+  const serviceAccountPath = join(__dirname, '../serviceAccountKey.json');
+  const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
 
-// Export null until Firebase is configured
-export const firebaseAuth = null;
-export const firebaseStorage = null;
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    storageBucket: 'stevens-fabrication-laboratory.firebasestorage.app'
+  });
 
-console.log('⚠ Firebase skipped (not configured yet)');
+  firebaseAuth = admin.auth();
+  firebaseStorage = admin.storage().bucket();
+
+  console.log('✓ Firebase Admin initialized');
+} catch (error) {
+  console.log('⚠ Firebase Admin not configured (serviceAccountKey.json not found)');
+  console.log('  Download from: Firebase Console → Project Settings → Service Accounts');
+}
+
+export { firebaseAuth, firebaseStorage };

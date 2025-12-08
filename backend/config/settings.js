@@ -10,6 +10,6 @@ export const settings = {
     storageBucket: 'your-bucket.appspot.com'
   },
   server: {
-    port: 5000
+    port: 3001
   }
 };
