@@ -24,7 +24,8 @@ export function AuthProvider({ children }) {
   async function fetchUserProfile(firebaseUser) {
     try {
       const token = await firebaseUser.getIdToken();
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,7 +56,8 @@ export function AuthProvider({ children }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     // Create profile in backend (backend determines role)
-    await fetch('http://localhost:3001/api/auth/register', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    await fetch(`${apiUrl}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
