@@ -5,36 +5,44 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function LoginPage() {
+export default function SignupPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login, role } = useAuth();
+  const { signup } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
 
+    // Validate Stevens email
+    if (!email.endsWith('@stevens.edu')) {
+      return setError('Please use your Stevens email address (@stevens.edu)');
+    }
+
+    if (password.length < 6) {
+      return setError('Password must be at least 6 characters');
+    }
+
     try {
       setError('');
       setLoading(true);
-      await login(email, password);
+      await signup(email, password, name);
 
-      // Wait for userProfile to load, then redirect based on role
-      setTimeout(() => {
-        // Check localStorage for role if context hasn't updated yet
-        const storedUser = localStorage.getItem('userRole');
-        const userRole = role || storedUser;
-
-        if (userRole === 'staff') {
-          router.push('/staff/dashboard');
-        } else {
-          router.push('/dashboard');
-        }
-      }, 1000);
+      // Redirect to dashboard after signup
+      router.push('/dashboard');
     } catch (error) {
-      setError('Failed to log in. Please check your credentials.');
+      if (error.code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Invalid email address');
+      } else if (error.code === 'auth/weak-password') {
+        setError('Password is too weak');
+      } else {
+        setError('Failed to create account. Please try again.');
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -44,10 +52,10 @@ export default function LoginPage() {
   return (
     <section className="max-w-md mx-auto mt-10 bg-white shadow rounded-lg p-6">
       <h1 className="text-2xl font-bold mb-4 text-center text-stevens-maroon">
-        Stevens Fab Lab Login
+        Create Account
       </h1>
       <p className="text-sm text-gray-600 mb-6 text-center">
-        Log in to access your dashboard. Students and staff use the same login.
+        Sign up for Stevens Fab Lab
       </p>
 
       {error && (
@@ -57,6 +65,24 @@ export default function LoginPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Full Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stevens-maroon"
+            placeholder="John Doe"
+          />
+        </div>
+
         <div>
           <label
             htmlFor="email"
@@ -90,7 +116,11 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stevens-maroon"
             placeholder="••••••••"
+            minLength={6}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Must be at least 6 characters
+          </p>
         </div>
 
         <button
@@ -98,13 +128,13 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full rounded-md bg-stevens-maroon px-4 py-2 text-sm font-medium text-white hover:bg-stevens-maroon-dark transition disabled:opacity-50"
         >
-          {loading ? 'Logging in...' : 'Log In'}
+          {loading ? 'Creating account...' : 'Sign Up'}
         </button>
 
         <p className="text-xs text-gray-500 text-center mt-4">
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-stevens-maroon hover:underline">
-            Sign up
+          Already have an account?{' '}
+          <Link href="/login" className="text-stevens-maroon hover:underline">
+            Log in
           </Link>
         </p>
       </form>

@@ -9,6 +9,9 @@ export default function Navigation() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/services", label: "Services" },
+    { href: "/equipment", label: "Equipment" },
+    { href: "/price-calculator", label: "Price Calculator" },
+    { href: "/order", label: "Order" },
   ];
 
   return (
