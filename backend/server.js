@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { connectToMongo } from './config/mongoConnection.js';
 import { connectToRedis } from './config/redisConnection.js';
+import { connectQueue } from './queue/publisher.js';
 import { settings } from './config/settings.js';
 import authRoutes from './routes/auth.js';
 import servicesRoutes from './routes/services.js';
@@ -32,7 +33,8 @@ async function start() {
   try {
     await connectToMongo();
     await connectToRedis();
-    
+    await connectQueue();
+
     app.listen(settings.server.port, () => {
       console.log(`✓ Server running on http://localhost:${settings.server.port}`);
     });

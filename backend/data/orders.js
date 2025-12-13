@@ -27,7 +27,7 @@ export async function createOrder(firebaseUid, userId, orderData) {
   const servicesCollection = await services();
   const ordersCollection = await orders();
 
-  // Calculate price
+  // Calculate price and enrich items with service/material names
   let totalPrice = 0;
   for (const item of items) {
     const service = await servicesCollection.findOne({
@@ -37,7 +37,18 @@ export async function createOrder(firebaseUid, userId, orderData) {
       const lineTotal = (service.pricePerUnit || 0) * (item.quantity || 1);
       item.unitPrice = lineTotal / item.quantity;
       item.lineTotal = lineTotal;
+      item.serviceName = service.name;
       totalPrice += lineTotal;
+    }
+
+    // If material ID provided, get material name
+    if (item.materialId) {
+      const material = await servicesCollection.findOne({
+        _id: new ObjectId(item.materialId)
+      });
+      if (material) {
+        item.materialName = material.name;
+      }
     }
   }
 
@@ -69,10 +80,12 @@ export async function createOrder(firebaseUid, userId, orderData) {
 
   const result = await ordersCollection.insertOne(order);
 
-
   if (!result.acknowledged || !result.insertedId) {
     throw new Error("Order insertion failed");
   }
+
+  // Add the generated _id to the order object
+  order._id = result.insertedId;
 
   return order;
 }

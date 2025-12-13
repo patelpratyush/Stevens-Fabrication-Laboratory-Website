@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate, requireStaff } from '../middleware/auth.js';
 import * as orderData from '../data/orders.js';
+import { enqueueOrderCreated } from '../queue/publisher.js';
 
 const router = express.Router();
 
@@ -45,9 +46,10 @@ router.post('/', authenticate, async (req, res) => {
       req.user._id,
       { items, files, notes }
     );
-    
-    // TODO: Queue order for email notification
-    
+
+    // Queue order for email notification
+    await enqueueOrderCreated(order, req.user);
+
     res.status(201).json({ order });
   } catch (error) {
     res.status(500).json({ error: error.message });

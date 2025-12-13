@@ -5,15 +5,20 @@
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
-    "seed": "node scripts/seed.js"
+    "worker": "node worker/emailWorker.js",
+    "seed": "node scripts/seed.js",
+    "process-images": "node scripts/processEquipmentImages.js"
   },
   "dependencies": {
+    "amqplib": "^0.10.9",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "firebase": "^12.6.0",
     "firebase-admin": "^12.0.0",
     "mongodb": "^6.3.0",
-    "redis": "^4.6.0"
+    "nodemailer": "^7.0.11",
+    "redis": "^4.6.0",
+    "sharp": "^0.34.5"
   }
 }
