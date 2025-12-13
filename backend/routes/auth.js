@@ -1,5 +1,5 @@
 import express from 'express';
-import { users } from '../config/mongoCollections.js';
+import * as userData from '../data/users.js';
 
 const router = express.Router();
 
@@ -13,8 +13,7 @@ router.post('/register', async (req, res) => {
   try {
     const { firebaseUid, email, name } = req.body;
 
-    const usersCollection = await users();
-    const existingUser = await usersCollection.findOne({ firebaseUid });
+    const existingUser = await userData.getUserByFirebaseUid(firebaseUid);
 
     if (existingUser) {
       return res.json({ user: existingUser });
@@ -23,16 +22,13 @@ router.post('/register', async (req, res) => {
     // Backend determines role based on email
     const role = STAFF_EMAILS.includes(email.toLowerCase()) ? 'staff' : 'student';
 
-    const user = {
+    const user = await userData.createUser({
       firebaseUid,
       email,
       name,
-      role,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      role
+    });
 
-    await usersCollection.insertOne(user);
     res.status(201).json({ user });
   } catch (error) {
     res.status(500).json({ error: error.message });

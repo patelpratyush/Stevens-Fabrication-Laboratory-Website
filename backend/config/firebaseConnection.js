@@ -11,7 +11,7 @@ let firebaseStorage = null;
 
 try {
   // Try to load service account key
-  const serviceAccountPath = join(__dirname, '../serviceAccountKey.json');
+  const serviceAccountPath = join(__dirname, 'serviceAccountKey.json');
   const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
 
   admin.initializeApp({
@@ -24,7 +24,7 @@ try {
 
   console.log('✓ Firebase Admin initialized');
 } catch (error) {
-  console.log('⚠ Firebase Admin not configured (serviceAccountKey.json not found)');
+  console.log(' Firebase Admin not configured (serviceAccountKey.json not found)');
   console.log('  Download from: Firebase Console → Project Settings → Service Accounts');
 }
 

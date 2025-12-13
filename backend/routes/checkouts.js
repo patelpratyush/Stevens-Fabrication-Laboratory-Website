@@ -1,21 +1,39 @@
 import express from 'express';
-import { ObjectId } from 'mongodb';
-import { checkouts, equipment } from '../config/mongoCollections.js';
 import { authenticate, requireStaff } from '../middleware/auth.js';
+import * as checkoutData from '../data/checkouts.js';
 
 const router = express.Router();
 
 // Get student's own checkouts
 router.get('/me', authenticate, async (req, res) => {
   try {
-    const checkoutsCollection = await checkouts();
-    const userCheckouts = await checkoutsCollection
-      .find({ firebaseUid: req.firebaseUid })
-      .sort({ checkoutDate: -1 })
-      .toArray();
-
+    const userCheckouts = await checkoutData.getCheckoutsByUser(req.firebaseUid);
     res.json({ checkouts: userCheckouts });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Student creates a checkout request
+router.post('/request', authenticate, async (req, res) => {
+  try {
+    const { equipmentId, dueDate, notes } = req.body;
+
+    const checkout = await checkoutData.createCheckoutRequest({
+      equipmentId,
+      firebaseUid: req.firebaseUid,
+      dueDate,
+      notes
+    });
+
+    res.status(201).json({ checkout });
+  } catch (error) {
+    if (error.message === 'Equipment not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Equipment is not available for checkout requests') {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -23,124 +41,91 @@ router.get('/me', authenticate, async (req, res) => {
 // Get all checkouts (staff only)
 router.get('/', authenticate, requireStaff, async (req, res) => {
   try {
-    const checkoutsCollection = await checkouts();
-    const allCheckouts = await checkoutsCollection
-      .find({})
-      .sort({ checkoutDate: -1 })
-      .toArray();
+    const { status } = req.query;
+    
+    let checkoutsList;
+    if (status === 'pending') {
+      checkoutsList = await checkoutData.getPendingCheckouts();
+    } else if (status === 'approved') {
+      checkoutsList = await checkoutData.getApprovedCheckouts();
+    } else {
+      checkoutsList = await checkoutData.getAllCheckouts();
+    }
 
-    res.json({ checkouts: allCheckouts });
+    res.json({ checkouts: checkoutsList });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Create checkout (staff only)
-router.post('/', authenticate, requireStaff, async (req, res) => {
+// Staff approves checkout request
+router.post('/:id/approve', authenticate, requireStaff, async (req, res) => {
   try {
-    const { equipmentId, userId, dueDate, notes } = req.body;
+    const { id } = req.params;
+    const checkout = await checkoutData.approveCheckout(id);
 
-    const checkoutsCollection = await checkouts();
-    const equipmentCollection = await equipment();
-
-    // Check if equipment exists and is available
-    const equipmentItem = await equipmentCollection.findOne({
-      _id: new ObjectId(equipmentId)
-    });
-
-    if (!equipmentItem) {
-      return res.status(404).json({ error: 'Equipment not found' });
-    }
-
-    if (equipmentItem.status !== 'available') {
-      return res.status(400).json({ error: 'Equipment is not available' });
-    }
-
-    const checkout = {
-      equipmentId: new ObjectId(equipmentId),
-      userId: userId,
-      firebaseUid: userId, // Assuming userId is firebaseUid for now
-      checkoutDate: new Date(),
-      dueDate: new Date(dueDate),
-      returnedDate: null,
-      status: 'active',
-      notes: notes || '',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    await checkoutsCollection.insertOne(checkout);
-
-    // Update equipment status to checked_out
-    await equipmentCollection.updateOne(
-      { _id: new ObjectId(equipmentId) },
-      {
-        $set: {
-          status: 'checked_out',
-          updatedAt: new Date()
-        }
-      }
-    );
-
-    res.status(201).json({ checkout });
+    res.json({ checkout });
   } catch (error) {
+    if (error.message === 'Checkout not found' || error.message === 'Equipment not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Only pending checkouts can be approved' || 
+        error.message === 'Equipment is no longer available') {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 });
 
-// Update checkout (staff only)
+// Staff denies checkout request
+router.post('/:id/deny', authenticate, requireStaff, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    
+    const checkout = await checkoutData.denyCheckout(id, reason);
+
+    res.json({ checkout });
+  } catch (error) {
+    if (error.message === 'Checkout not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Only pending checkouts can be denied') {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Staff marks checkout as returned
+router.post('/:id/return', authenticate, requireStaff, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const checkout = await checkoutData.returnCheckout(id);
+
+    res.json({ checkout });
+  } catch (error) {
+    if (error.message === 'Checkout not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Only approved checkouts can be returned') {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update checkout details (staff only) - for editing due dates, notes, etc.
 router.patch('/:id', authenticate, requireStaff, async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-
-    const checkoutsCollection = await checkouts();
-    const equipmentCollection = await equipment();
-
-    // Remove fields that shouldn't be updated directly
-    delete updates._id;
-    delete updates.createdAt;
-    delete updates.equipmentId;
-
-    updates.updatedAt = new Date();
-
-    // Convert date strings to Date objects
-    if (updates.dueDate) {
-      updates.dueDate = new Date(updates.dueDate);
-    }
-    if (updates.returnedDate) {
-      updates.returnedDate = new Date(updates.returnedDate);
-    }
-
-    const checkout = await checkoutsCollection.findOne({
-      _id: new ObjectId(id)
-    });
-
-    if (!checkout) {
-      return res.status(404).json({ error: 'Checkout not found' });
-    }
-
-    const result = await checkoutsCollection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $set: updates },
-      { returnDocument: 'after' }
-    );
-
-    // If checkout is being returned, update equipment status
-    if (updates.status === 'returned' || updates.returnedDate) {
-      await equipmentCollection.updateOne(
-        { _id: checkout.equipmentId },
-        {
-          $set: {
-            status: 'available',
-            updatedAt: new Date()
-          }
-        }
-      );
-    }
+    const result = await checkoutData.updateCheckout(id, req.body);
 
     res.json({ checkout: result });
   } catch (error) {
+    if (error.message === 'Checkout not found') {
+      return res.status(404).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 });
