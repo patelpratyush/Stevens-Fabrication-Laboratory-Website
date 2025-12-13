@@ -102,7 +102,30 @@ export async function approveCheckout(checkoutId) {
   }
 
   if (equipmentItem.status !== 'available') {
-    throw new Error('Equipment is no longer available');
+    // Equipment is no longer available - auto-deny this checkout
+    await checkoutsCollection.updateOne(
+      { _id: new ObjectId(checkoutId) },
+      { 
+        $set: { 
+          status: 'denied',
+          denialReason: `Equipment is now ${equipmentItem.status}`,
+          updatedAt: new Date() 
+        } 
+      }
+    );
+    throw new Error(`Equipment is no longer available (status: ${equipmentItem.status})`);
+  }
+
+  // Check if there are other pending checkouts for this equipment that were requested earlier
+  const earlierPendingCheckouts = await checkoutsCollection.find({
+    equipmentId: checkout.equipmentId,
+    status: 'pending',
+    createdAt: { $lt: checkout.createdAt },
+    _id: { $ne: checkout._id }
+  }).toArray();
+
+  if (earlierPendingCheckouts.length > 0) {
+    throw new Error('There are earlier pending requests for this equipment. Please review those first.');
   }
 
   // Update checkout status to approved and set checkout date
@@ -124,6 +147,22 @@ export async function approveCheckout(checkoutId) {
     {
       $set: {
         status: 'checked_out',
+        updatedAt: new Date()
+      }
+    }
+  );
+
+  // Auto-deny all other pending checkouts for this equipment
+  await checkoutsCollection.updateMany(
+    {
+      equipmentId: checkout.equipmentId,
+      status: 'pending',
+      _id: { $ne: checkout._id }
+    },
+    {
+      $set: {
+        status: 'denied',
+        denialReason: 'Equipment was checked out to another student',
         updatedAt: new Date()
       }
     }

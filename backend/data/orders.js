@@ -41,9 +41,18 @@ export async function createOrder(firebaseUid, userId, orderData) {
     }
   }
 
-  // Generate order number
-  const orderCount = await ordersCollection.countDocuments();
-  const orderNumber = `FAB-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`;
+  // Generate timestamp-based order number
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  // Generate 4-character random suffix (uppercase alphanumeric)
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+
+  const orderNumber = `FAB-${year}${month}${day}-${hours}${minutes}-${randomSuffix}`;
 
   const order = {
     orderNumber,
@@ -58,19 +67,25 @@ export async function createOrder(firebaseUid, userId, orderData) {
     updatedAt: new Date()
   };
 
-  await ordersCollection.insertOne(order);
+  const result = await ordersCollection.insertOne(order);
+
+
+  if (!result.acknowledged || !result.insertedId) {
+    throw new Error("Order insertion failed");
+  }
+
   return order;
 }
 
 export async function updateOrder(orderId, updates) {
   const ordersCollection = await orders();
-  
+
   delete updates._id;
   delete updates.createdAt;
   delete updates.orderNumber;
-  
+
   updates.updatedAt = new Date();
-  
+
   return await ordersCollection.findOneAndUpdate(
     { _id: new ObjectId(orderId) },
     { $set: updates },

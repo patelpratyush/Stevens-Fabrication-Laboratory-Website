@@ -20,7 +20,7 @@ export default function Navigation() {
         {/* Logo/Brand */}
         <Link href="/" className="flex items-center space-x-3 group">
           <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-            <span className="text-stevens-maroon font-bold text-xl">SF</span>
+            <span className="text-stevens-maroon font-bold text-xl">SIT</span>
           </div>
           <div className="flex flex-col">
             <span className="text-white font-bold text-lg leading-tight">
