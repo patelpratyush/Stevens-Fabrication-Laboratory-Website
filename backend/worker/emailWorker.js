@@ -1,30 +1,35 @@
-import amqp from 'amqplib';
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
+import amqp from "amqplib";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 // Create Mailtrap transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.MAILTRAP_HOST || 'sandbox.smtp.mailtrap.io',
+  host: process.env.MAILTRAP_HOST || "sandbox.smtp.mailtrap.io",
   port: parseInt(process.env.MAILTRAP_PORT) || 2525,
   auth: {
     user: process.env.MAILTRAP_USER,
-    pass: process.env.MAILTRAP_PASS
-  }
+    pass: process.env.MAILTRAP_PASS,
+  },
 });
 
 async function sendConfirmationEmail(order) {
   const itemsList = order.items
-    .map(item => {
-      const material = item.materialName ? ` (${item.materialName})` : '';
-      return `<li>${item.serviceName}${material} - Qty: ${item.quantity} - $${item.lineTotal.toFixed(2)}</li>`;
+    .map((item) => {
+      const material = item.materialName ? ` (${item.materialName})` : "";
+      return `<li>${item.serviceName}${material} - Qty: ${
+        item.quantity
+      } - $${item.lineTotal.toFixed(2)}</li>`;
     })
-    .join('');
+    .join("");
 
-  const filesList = order.files && order.files.length > 0
-    ? `<h3>Uploaded Files:</h3><ul>${order.files.map(f => `<li>${f.name}</li>`).join('')}</ul>`
-    : '';
+  const filesList =
+    order.files && order.files.length > 0
+      ? `<h3>Uploaded Files:</h3><ul>${order.files
+          .map((f) => `<li>${f.name}</li>`)
+          .join("")}</ul>`
+      : "";
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -35,7 +40,9 @@ async function sendConfirmationEmail(order) {
       <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h2 style="margin-top: 0;">Order #${order.orderNumber}</h2>
         <p><strong>Status:</strong> Submitted</p>
-        <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+        <p><strong>Date:</strong> ${new Date(
+          order.createdAt
+        ).toLocaleString()}</p>
       </div>
 
       <h3>Order Details:</h3>
@@ -63,21 +70,26 @@ async function sendConfirmationEmail(order) {
     from: '"Stevens Fab Lab" <noreply@fablab.stevens.edu>',
     to: order.user.email,
     subject: `Order ${order.orderNumber} Received`,
-    html
+    html,
   });
 }
 
 async function sendStaffNotification(order) {
   const itemsList = order.items
-    .map(item => {
-      const material = item.materialName ? ` (${item.materialName})` : '';
-      return `<li>${item.serviceName}${material} - Qty: ${item.quantity} - $${item.lineTotal.toFixed(2)}</li>`;
+    .map((item) => {
+      const material = item.materialName ? ` (${item.materialName})` : "";
+      return `<li>${item.serviceName}${material} - Qty: ${
+        item.quantity
+      } - $${item.lineTotal.toFixed(2)}</li>`;
     })
-    .join('');
+    .join("");
 
-  const filesList = order.files && order.files.length > 0
-    ? `<h3>Files:</h3><ul>${order.files.map(f => `<li><a href="${f.url}">${f.name}</a></li>`).join('')}</ul>`
-    : '<p><em>No files uploaded</em></p>';
+  const filesList =
+    order.files && order.files.length > 0
+      ? `<h3>Files:</h3><ul>${order.files
+          .map((f) => `<li><a href="${f.url}">${f.name}</a></li>`)
+          .join("")}</ul>`
+      : "<p><em>No files uploaded</em></p>";
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -85,8 +97,12 @@ async function sendStaffNotification(order) {
 
       <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h2 style="margin-top: 0;">Order #${order.orderNumber}</h2>
-        <p><strong>Customer:</strong> ${order.user.name} (${order.user.email})</p>
-        <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+        <p><strong>Customer:</strong> ${order.user.name} (${
+    order.user.email
+  })</p>
+        <p><strong>Date:</strong> ${new Date(
+          order.createdAt
+        ).toLocaleString()}</p>
         <p><strong>Total:</strong> $${order.totalPrice.toFixed(2)}</p>
       </div>
 
@@ -101,32 +117,32 @@ async function sendStaffNotification(order) {
 
   await transporter.sendMail({
     from: '"Fab Lab System" <noreply@fablab.stevens.edu>',
-    to: process.env.STAFF_EMAIL || 'fablab@stevens.edu',
+    to: process.env.STAFF_EMAIL || "fablab@stevens.edu",
     subject: `New Order: ${order.orderNumber} from ${order.user.name}`,
-    html
+    html,
   });
 }
 
 async function startWorker() {
   try {
-    console.log('Starting email worker...');
+    console.log("Starting email worker...");
 
     // Connect to RabbitMQ
-    const rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
+    const rabbitmqUrl = process.env.RABBITMQ_URL || "amqp://localhost:5672";
     const connection = await amqp.connect(rabbitmqUrl);
     const channel = await connection.createChannel();
 
     // Assert queue exists
-    await channel.assertQueue('orders.created', { durable: true });
+    await channel.assertQueue("orders.created", { durable: true });
 
     // Prefetch 1 message at a time
     channel.prefetch(1);
 
-    console.log('✓ Email worker connected to RabbitMQ');
-    console.log('Waiting for orders on queue: orders.created...');
+    console.log("✓ Email worker connected to RabbitMQ");
+    console.log("Waiting for orders on queue: orders.created...");
 
     // Consume messages
-    channel.consume('orders.created', async (msg) => {
+    channel.consume("orders.created", async (msg) => {
       if (!msg) return;
 
       try {
@@ -144,26 +160,25 @@ async function startWorker() {
         channel.ack(msg);
         console.log(`✓ Order ${order.orderNumber} processed successfully\n`);
       } catch (error) {
-        console.error('Error processing message:', error);
+        console.error("Error processing message:", error);
         // Reject and requeue if there's an error
         channel.nack(msg, false, true);
       }
     });
 
     // Handle graceful shutdown
-    process.on('SIGINT', async () => {
-      console.log('\nShutting down email worker...');
+    process.on("SIGINT", async () => {
+      console.log("\nShutting down email worker...");
       await channel.close();
       await connection.close();
       process.exit(0);
     });
-
   } catch (error) {
-    console.error('Failed to start email worker:', error);
-    console.log('\nMake sure RabbitMQ is running:');
-    console.log('  brew services start rabbitmq');
-    console.log('  OR');
-    console.log('  docker run -d -p 5672:5672 rabbitmq:3');
+    console.error("Failed to start email worker:", error);
+    console.log("\nMake sure RabbitMQ is running:");
+    console.log("  brew services start rabbitmq");
+    console.log("  OR");
+    console.log("  docker run -d -p 5672:5672 rabbitmq:3");
     process.exit(1);
   }
 }

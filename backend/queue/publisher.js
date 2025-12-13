@@ -1,22 +1,24 @@
-import amqp from 'amqplib';
+import amqp from "amqplib";
 
 let channel = null;
 let connection = null;
 
 export async function connectQueue() {
   try {
-    const rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
+    const rabbitmqUrl = process.env.RABBITMQ_URL || "amqp://localhost:5672";
     connection = await amqp.connect(rabbitmqUrl);
     channel = await connection.createChannel();
 
     // Declare the orders.created queue with durable option
-    await channel.assertQueue('orders.created', { durable: true });
+    await channel.assertQueue("orders.created", { durable: true });
 
-    console.log('✓ RabbitMQ connected and queue asserted');
+    console.log("✓ RabbitMQ connected and queue asserted");
     return channel;
   } catch (error) {
-    console.error('⚠ RabbitMQ connection failed:', error.message);
-    console.log('  Make sure RabbitMQ is running: brew services start rabbitmq');
+    console.error("⚠ RabbitMQ connection failed:", error.message);
+    console.log(
+      "  Make sure RabbitMQ is running: brew services start rabbitmq"
+    );
     // Don't crash the app if RabbitMQ is down
     return null;
   }
@@ -29,7 +31,7 @@ export async function enqueueOrderCreated(order, user) {
     }
 
     if (!channel) {
-      console.warn('RabbitMQ not available - skipping email queue');
+      console.warn("RabbitMQ not available - skipping email queue");
       return;
     }
 
@@ -39,36 +41,38 @@ export async function enqueueOrderCreated(order, user) {
       user: {
         firebaseUid: user.firebaseUid,
         email: user.email,
-        name: user.name
+        name: user.name,
       },
       totalPrice: order.totalPrice,
-      items: order.items.map(item => ({
-        serviceName: item.serviceName || 'Service',
-        materialName: item.materialName || '',
+      items: order.items.map((item) => ({
+        serviceName: item.serviceName || "Service",
+        materialName: item.materialName || "",
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        lineTotal: item.lineTotal
+        lineTotal: item.lineTotal,
       })),
       files: order.files || [],
-      createdAt: order.createdAt.toISOString()
+      createdAt: order.createdAt.toISOString(),
     };
 
     channel.sendToQueue(
-      'orders.created',
+      "orders.created",
       Buffer.from(JSON.stringify(message)),
       { persistent: true }
     );
 
-    console.log(`✓ Order ${order.orderNumber} enqueued for email notifications`);
+    console.log(
+      `✓ Order ${order.orderNumber} enqueued for email notifications`
+    );
   } catch (error) {
-    console.error('Error enqueueing order:', error.message);
+    console.error("Error enqueueing order:", error.message);
     // Don't fail the order creation if queue fails
   }
 }
 
 // Graceful shutdown
-process.on('SIGINT', async () => {
+process.on("SIGINT", async () => {
   if (channel) await channel.close();
   if (connection) await connection.close();
-  console.log('RabbitMQ connection closed');
+  console.log("RabbitMQ connection closed");
 });

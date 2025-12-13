@@ -1,11 +1,9 @@
-import { ObjectId } from 'mongodb';
-import { services } from '../config/mongoCollections.js';
+import { ObjectId } from "mongodb";
+import { services } from "../config/mongoCollections.js";
 
 export async function getAllActiveServices() {
   const servicesCollection = await services();
-  return await servicesCollection
-    .find({ active: true })
-    .toArray();
+  return await servicesCollection.find({ active: true }).toArray();
 }
 
 export async function getAllServices() {
@@ -29,7 +27,7 @@ export async function createService(serviceData) {
     basePrice,
     pricePerUnit,
     unitLabel,
-    laserMetadata
+    laserMetadata,
   } = serviceData;
 
   const servicesCollection = await services();
@@ -38,7 +36,7 @@ export async function createService(serviceData) {
     name,
     category,
     type,
-    status: status || 'available',
+    status: status || "available",
     description,
     priceType,
     basePrice: basePrice || 0,
@@ -47,12 +45,12 @@ export async function createService(serviceData) {
     laserMetadata: laserMetadata || {},
     active: true,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 
   const result = await servicesCollection.insertOne(service);
   service._id = result.insertedId;
-  
+
   return service;
 }
 
@@ -67,7 +65,7 @@ export async function updateService(serviceId, updates) {
   return await servicesCollection.findOneAndUpdate(
     { _id: new ObjectId(serviceId) },
     { $set: updates },
-    { returnDocument: 'after' }
+    { returnDocument: "after" }
   );
 }
 

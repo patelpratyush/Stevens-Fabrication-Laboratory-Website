@@ -1,11 +1,11 @@
-import express from 'express';
-import { authenticate, requireStaff } from '../middleware/auth.js';
-import * as equipmentData from '../data/equipment.js';
+import express from "express";
+import { authenticate, requireStaff } from "../middleware/auth.js";
+import * as equipmentData from "../data/equipment.js";
 
 const router = express.Router();
 
 // Get all active equipment (public)
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const equipmentList = await equipmentData.getAllActiveEquipment();
     res.json({ equipment: equipmentList });
@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // Create new equipment (staff only)
-router.post('/', authenticate, requireStaff, async (req, res) => {
+router.post("/", authenticate, requireStaff, async (req, res) => {
   try {
     const equipment = await equipmentData.createEquipment(req.body);
     res.status(201).json({ equipment });
@@ -25,13 +25,13 @@ router.post('/', authenticate, requireStaff, async (req, res) => {
 });
 
 // Update equipment (staff only)
-router.patch('/:id', authenticate, requireStaff, async (req, res) => {
+router.patch("/:id", authenticate, requireStaff, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await equipmentData.updateEquipment(id, req.body);
 
     if (!result) {
-      return res.status(404).json({ error: 'Equipment not found' });
+      return res.status(404).json({ error: "Equipment not found" });
     }
 
     res.json({ equipment: result });

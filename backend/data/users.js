@@ -1,4 +1,4 @@
-import { users } from '../config/mongoCollections.js';
+import { users } from "../config/mongoCollections.js";
 
 export async function getUserByFirebaseUid(firebaseUid) {
   const usersCollection = await users();
@@ -10,7 +10,7 @@ export async function createUser(userData) {
   const user = {
     ...userData,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
   await usersCollection.insertOne(user);
   return user;
@@ -21,13 +21,13 @@ export async function updateUser(firebaseUid, updates) {
   delete updates._id;
   delete updates.createdAt;
   delete updates.firebaseUid;
-  
+
   updates.updatedAt = new Date();
-  
+
   return await usersCollection.findOneAndUpdate(
     { firebaseUid },
     { $set: updates },
-    { returnDocument: 'after' }
+    { returnDocument: "after" }
   );
 }
 

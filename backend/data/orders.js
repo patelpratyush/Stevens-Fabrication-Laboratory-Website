@@ -1,12 +1,9 @@
-import { ObjectId } from 'mongodb';
-import { orders, services } from '../config/mongoCollections.js';
+import { ObjectId } from "mongodb";
+import { orders, services } from "../config/mongoCollections.js";
 
 export async function getAllOrders() {
   const ordersCollection = await orders();
-  return await ordersCollection
-    .find({})
-    .sort({ createdAt: -1 })
-    .toArray();
+  return await ordersCollection.find({}).sort({ createdAt: -1 }).toArray();
 }
 
 export async function getOrdersByUser(firebaseUid) {
@@ -31,7 +28,7 @@ export async function createOrder(firebaseUid, userId, orderData) {
   let totalPrice = 0;
   for (const item of items) {
     const service = await servicesCollection.findOne({
-      _id: new ObjectId(item.serviceId)
+      _id: new ObjectId(item.serviceId),
     });
     if (service) {
       const lineTotal = (service.pricePerUnit || 0) * (item.quantity || 1);
@@ -44,7 +41,7 @@ export async function createOrder(firebaseUid, userId, orderData) {
     // If material ID provided, get material name
     if (item.materialId) {
       const material = await servicesCollection.findOne({
-        _id: new ObjectId(item.materialId)
+        _id: new ObjectId(item.materialId),
       });
       if (material) {
         item.materialName = material.name;
@@ -55,10 +52,10 @@ export async function createOrder(firebaseUid, userId, orderData) {
   // Generate timestamp-based order number
   const now = new Date();
   const year = now.getFullYear().toString().slice(-2);
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
 
   // Generate 4-character random suffix (uppercase alphanumeric)
   const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -72,10 +69,10 @@ export async function createOrder(firebaseUid, userId, orderData) {
     items,
     files: files || [],
     totalPrice,
-    status: 'submitted',
-    notes: notes || '',
+    status: "submitted",
+    notes: notes || "",
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 
   const result = await ordersCollection.insertOne(order);
@@ -102,7 +99,7 @@ export async function updateOrder(orderId, updates) {
   return await ordersCollection.findOneAndUpdate(
     { _id: new ObjectId(orderId) },
     { $set: updates },
-    { returnDocument: 'after' }
+    { returnDocument: "after" }
   );
 }
 

@@ -1,18 +1,15 @@
-import { ObjectId } from 'mongodb';
-import { checkouts, equipment } from '../config/mongoCollections.js';
+import { ObjectId } from "mongodb";
+import { checkouts, equipment } from "../config/mongoCollections.js";
 
 export async function getAllCheckouts() {
   const checkoutsCollection = await checkouts();
-  return await checkoutsCollection
-    .find({})
-    .sort({ createdAt: -1 })
-    .toArray();
+  return await checkoutsCollection.find({}).sort({ createdAt: -1 }).toArray();
 }
 
 export async function getPendingCheckouts() {
   const checkoutsCollection = await checkouts();
   return await checkoutsCollection
-    .find({ status: 'pending' })
+    .find({ status: "pending" })
     .sort({ createdAt: -1 })
     .toArray();
 }
@@ -20,7 +17,7 @@ export async function getPendingCheckouts() {
 export async function getApprovedCheckouts() {
   const checkoutsCollection = await checkouts();
   return await checkoutsCollection
-    .find({ status: 'approved' })
+    .find({ status: "approved" })
     .sort({ checkoutDate: -1 })
     .toArray();
 }
@@ -41,21 +38,21 @@ export async function getCheckoutById(checkoutId) {
 // Student creates checkout request (pending status)
 export async function createCheckoutRequest(checkoutData) {
   const { equipmentId, firebaseUid, dueDate, notes } = checkoutData;
-  
+
   const checkoutsCollection = await checkouts();
   const equipmentCollection = await equipment();
 
   // Check if equipment exists and is available
   const equipmentItem = await equipmentCollection.findOne({
-    _id: new ObjectId(equipmentId)
+    _id: new ObjectId(equipmentId),
   });
 
   if (!equipmentItem) {
-    throw new Error('Equipment not found');
+    throw new Error("Equipment not found");
   }
 
-  if (equipmentItem.status !== 'available') {
-    throw new Error('Equipment is not available for checkout requests');
+  if (equipmentItem.status !== "available") {
+    throw new Error("Equipment is not available for checkout requests");
   }
 
   const checkout = {
@@ -65,10 +62,10 @@ export async function createCheckoutRequest(checkoutData) {
     dueDate: new Date(dueDate),
     checkoutDate: null,
     returnedDate: null,
-    status: 'pending', // pending, approved, denied, returned
-    notes: notes || '',
+    status: "pending", // pending, approved, denied, returned
+    notes: notes || "",
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 
   await checkoutsCollection.insertOne(checkout);
@@ -81,64 +78,70 @@ export async function approveCheckout(checkoutId) {
   const equipmentCollection = await equipment();
 
   const checkout = await checkoutsCollection.findOne({
-    _id: new ObjectId(checkoutId)
+    _id: new ObjectId(checkoutId),
   });
 
   if (!checkout) {
-    throw new Error('Checkout not found');
+    throw new Error("Checkout not found");
   }
 
-  if (checkout.status !== 'pending') {
-    throw new Error('Only pending checkouts can be approved');
+  if (checkout.status !== "pending") {
+    throw new Error("Only pending checkouts can be approved");
   }
 
   // Check if equipment is still available
   const equipmentItem = await equipmentCollection.findOne({
-    _id: checkout.equipmentId
+    _id: checkout.equipmentId,
   });
 
   if (!equipmentItem) {
-    throw new Error('Equipment not found');
+    throw new Error("Equipment not found");
   }
 
-  if (equipmentItem.status !== 'available') {
+  if (equipmentItem.status !== "available") {
     // Equipment is no longer available - auto-deny this checkout
     await checkoutsCollection.updateOne(
       { _id: new ObjectId(checkoutId) },
-      { 
-        $set: { 
-          status: 'denied',
+      {
+        $set: {
+          status: "denied",
           denialReason: `Equipment is now ${equipmentItem.status}`,
-          updatedAt: new Date() 
-        } 
+          updatedAt: new Date(),
+        },
       }
     );
-    throw new Error(`Equipment is no longer available (status: ${equipmentItem.status})`);
+    throw new Error(
+      `Equipment is no longer available (status: ${equipmentItem.status})`
+    );
   }
 
   // Check if there are other pending checkouts for this equipment that were requested earlier
-  const earlierPendingCheckouts = await checkoutsCollection.find({
-    equipmentId: checkout.equipmentId,
-    status: 'pending',
-    createdAt: { $lt: checkout.createdAt },
-    _id: { $ne: checkout._id }
-  }).toArray();
+  const earlierPendingCheckouts = await checkoutsCollection
+    .find({
+      equipmentId: checkout.equipmentId,
+      status: "pending",
+      createdAt: { $lt: checkout.createdAt },
+      _id: { $ne: checkout._id },
+    })
+    .toArray();
 
   if (earlierPendingCheckouts.length > 0) {
-    throw new Error('There are earlier pending requests for this equipment. Please review those first.');
+    throw new Error(
+      "There are earlier pending requests for this equipment. Please review those first."
+    );
   }
 
   // Update checkout status to approved and set checkout date
   const result = await checkoutsCollection.findOneAndUpdate(
     { _id: new ObjectId(checkoutId) },
-    { 
-      $set: { 
-        status: 'approved',
+    {
+      $set: {
+        status: "approved",
         checkoutDate: new Date(),
-        updatedAt: new Date() 
-      } 
+        updatedAt: new Date(),
+      },
     },
-    { returnDocument: 'after' }
+    { returnDocument: "after" }
   );
 
   // Update equipment status to checked_out
@@ -146,9 +149,9 @@ export async function approveCheckout(checkoutId) {
     { _id: checkout.equipmentId },
     {
       $set: {
-        status: 'checked_out',
-        updatedAt: new Date()
-      }
+        status: "checked_out",
+        updatedAt: new Date(),
+      },
     }
   );
 
@@ -156,15 +159,15 @@ export async function approveCheckout(checkoutId) {
   await checkoutsCollection.updateMany(
     {
       equipmentId: checkout.equipmentId,
-      status: 'pending',
-      _id: { $ne: checkout._id }
+      status: "pending",
+      _id: { $ne: checkout._id },
     },
     {
       $set: {
-        status: 'denied',
-        denialReason: 'Equipment was checked out to another student',
-        updatedAt: new Date()
-      }
+        status: "denied",
+        denialReason: "Equipment was checked out to another student",
+        updatedAt: new Date(),
+      },
     }
   );
 
@@ -176,27 +179,27 @@ export async function denyCheckout(checkoutId, denialReason) {
   const checkoutsCollection = await checkouts();
 
   const checkout = await checkoutsCollection.findOne({
-    _id: new ObjectId(checkoutId)
+    _id: new ObjectId(checkoutId),
   });
 
   if (!checkout) {
-    throw new Error('Checkout not found');
+    throw new Error("Checkout not found");
   }
 
-  if (checkout.status !== 'pending') {
-    throw new Error('Only pending checkouts can be denied');
+  if (checkout.status !== "pending") {
+    throw new Error("Only pending checkouts can be denied");
   }
 
   const result = await checkoutsCollection.findOneAndUpdate(
     { _id: new ObjectId(checkoutId) },
-    { 
-      $set: { 
-        status: 'denied',
-        denialReason: denialReason || '',
-        updatedAt: new Date() 
-      } 
+    {
+      $set: {
+        status: "denied",
+        denialReason: denialReason || "",
+        updatedAt: new Date(),
+      },
     },
-    { returnDocument: 'after' }
+    { returnDocument: "after" }
   );
 
   return result;
@@ -220,17 +223,17 @@ export async function updateCheckout(checkoutId, updates) {
   }
 
   const checkout = await checkoutsCollection.findOne({
-    _id: new ObjectId(checkoutId)
+    _id: new ObjectId(checkoutId),
   });
 
   if (!checkout) {
-    throw new Error('Checkout not found');
+    throw new Error("Checkout not found");
   }
 
   const result = await checkoutsCollection.findOneAndUpdate(
     { _id: new ObjectId(checkoutId) },
     { $set: updates },
-    { returnDocument: 'after' }
+    { returnDocument: "after" }
   );
 
   return result;
@@ -242,27 +245,27 @@ export async function returnCheckout(checkoutId) {
   const equipmentCollection = await equipment();
 
   const checkout = await checkoutsCollection.findOne({
-    _id: new ObjectId(checkoutId)
+    _id: new ObjectId(checkoutId),
   });
 
   if (!checkout) {
-    throw new Error('Checkout not found');
+    throw new Error("Checkout not found");
   }
 
-  if (checkout.status !== 'approved') {
-    throw new Error('Only approved checkouts can be returned');
+  if (checkout.status !== "approved") {
+    throw new Error("Only approved checkouts can be returned");
   }
 
   const result = await checkoutsCollection.findOneAndUpdate(
     { _id: new ObjectId(checkoutId) },
-    { 
-      $set: { 
-        status: 'returned',
+    {
+      $set: {
+        status: "returned",
         returnedDate: new Date(),
-        updatedAt: new Date() 
-      } 
+        updatedAt: new Date(),
+      },
     },
-    { returnDocument: 'after' }
+    { returnDocument: "after" }
   );
 
   // Update equipment status back to available
@@ -270,9 +273,9 @@ export async function returnCheckout(checkoutId) {
     { _id: checkout.equipmentId },
     {
       $set: {
-        status: 'available',
-        updatedAt: new Date()
-      }
+        status: "available",
+        updatedAt: new Date(),
+      },
     }
   );
 

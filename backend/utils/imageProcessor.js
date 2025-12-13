@@ -1,7 +1,7 @@
-import sharp from 'sharp';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs/promises';
+import sharp from "sharp";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import fs from "fs/promises";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 export async function processEquipmentImage(inputImage, outputName) {
   try {
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(__dirname, '../../uploads/equipment');
+    const uploadsDir = join(__dirname, "../../uploads/equipment");
     await fs.mkdir(uploadsDir, { recursive: true });
 
     const basePath = join(uploadsDir, outputName);
@@ -28,8 +28,8 @@ export async function processEquipmentImage(inputImage, outputName) {
     const optimizedPath = `${basePath}_optimized.jpg`;
     await image
       .resize(1200, null, {
-        fit: 'inside',
-        withoutEnlargement: true
+        fit: "inside",
+        withoutEnlargement: true,
       })
       .jpeg({ quality: 90 })
       .toFile(optimizedPath);
@@ -38,8 +38,8 @@ export async function processEquipmentImage(inputImage, outputName) {
     const thumbnailPath = `${basePath}_thumb.jpg`;
     await sharp(inputImage)
       .resize(300, 300, {
-        fit: 'cover',
-        position: 'center'
+        fit: "cover",
+        position: "center",
       })
       .jpeg({ quality: 80 })
       .toFile(thumbnailPath);
@@ -51,10 +51,10 @@ export async function processEquipmentImage(inputImage, outputName) {
 
     return {
       original: optimizedPath,
-      thumbnail: thumbnailPath
+      thumbnail: thumbnailPath,
     };
   } catch (error) {
-    console.error('Error processing image:', error);
+    console.error("Error processing image:", error);
     throw new Error(`Image processing failed: ${error.message}`);
   }
 }
@@ -84,7 +84,7 @@ export async function processBatchImages(images) {
  */
 export async function generateThumbnail(imageUrl, outputName) {
   try {
-    const uploadsDir = join(__dirname, '../../uploads/equipment/thumbs');
+    const uploadsDir = join(__dirname, "../../uploads/equipment/thumbs");
     await fs.mkdir(uploadsDir, { recursive: true });
 
     const thumbnailPath = join(uploadsDir, `${outputName}_thumb.jpg`);
@@ -93,8 +93,8 @@ export async function generateThumbnail(imageUrl, outputName) {
     // For now, assuming it's a local path
     await sharp(imageUrl)
       .resize(300, 300, {
-        fit: 'cover',
-        position: 'center'
+        fit: "cover",
+        position: "center",
       })
       .jpeg({ quality: 80 })
       .toFile(thumbnailPath);
@@ -102,7 +102,7 @@ export async function generateThumbnail(imageUrl, outputName) {
     console.log(`✓ Generated thumbnail: ${thumbnailPath}`);
     return thumbnailPath;
   } catch (error) {
-    console.error('Error generating thumbnail:', error);
+    console.error("Error generating thumbnail:", error);
     throw new Error(`Thumbnail generation failed: ${error.message}`);
   }
 }
@@ -118,26 +118,26 @@ export async function optimizeImage(inputImage, options = {}) {
     maxWidth = 1200,
     maxHeight = 1200,
     quality = 85,
-    format = 'jpeg'
+    format = "jpeg",
   } = options;
 
   try {
     let pipeline = sharp(inputImage).resize(maxWidth, maxHeight, {
-      fit: 'inside',
-      withoutEnlargement: true
+      fit: "inside",
+      withoutEnlargement: true,
     });
 
-    if (format === 'jpeg') {
+    if (format === "jpeg") {
       pipeline = pipeline.jpeg({ quality });
-    } else if (format === 'png') {
+    } else if (format === "png") {
       pipeline = pipeline.png({ quality });
-    } else if (format === 'webp') {
+    } else if (format === "webp") {
       pipeline = pipeline.webp({ quality });
     }
 
     return await pipeline.toBuffer();
   } catch (error) {
-    console.error('Error optimizing image:', error);
+    console.error("Error optimizing image:", error);
     throw new Error(`Image optimization failed: ${error.message}`);
   }
 }
