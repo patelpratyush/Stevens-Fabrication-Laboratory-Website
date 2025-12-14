@@ -1,0 +1,17 @@
+{
+  "name": "stevens-fabrication-laboratory",
+  "version": "1.0.0",
+  "description": "Stevens Fabrication Laboratory Website",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run worker\" \"npm run client\"",
+    "server": "cd backend && npm start",
+    "worker": "cd backend && npm run worker",
+    "client": "cd client && npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

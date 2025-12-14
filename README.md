@@ -54,23 +54,42 @@ cp .env.local.example .env.local
 - Firebase Console → Project Settings → Service Accounts → Generate New Private Key
 - Save as `backend/serviceAccountKey.json`
 
+**Mailtrap (Email Testing):**
+- Sign up at https://mailtrap.io (free)
+- Create an inbox and get SMTP credentials
+- Add to `backend/.env`:
+  ```
+  MAILTRAP_USER=your_username
+  MAILTRAP_PASS=your_password
+  ```
+
 ## Running the Application
 
-Open 3 terminals:
+**Option 1: Using Concurrently (One Command)**
 
-**Terminal 1 - Backend:**
+At the root directory:
+```bash
+npm install
+npm start
+```
+
+This runs backend + worker + frontend simultaneously.
+
+**Option 2: Using Separate Terminals**
+
+Terminal 1 - Backend:
 ```bash
 cd backend
 npm start
 ```
 
-**Terminal 2 - Email Worker:**
+Terminal 2 - Email Worker:
 ```bash
 cd backend
 npm run worker
 ```
 
-**Terminal 3 - Frontend:**
+Terminal 3 - Frontend:
 ```bash
 cd client
 npm run dev
