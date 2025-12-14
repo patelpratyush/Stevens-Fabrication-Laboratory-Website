@@ -1,451 +1,297 @@
-# Backend Setup Guide
+# Backend Setup
 
-## Prerequisites
+Quick guide to get the backend running for our Fab Lab project.
 
-Make sure you have the following installed:
+## What You Need
 
-- Node.js v18+
+Install these first:
+
+- Node.js (v18 or newer)
 - MongoDB
 - Redis
 - RabbitMQ
 
-## Installation
+## Setup Steps
 
-### 1. Install Dependencies
+### 1. Install npm packages
 
 ```bash
 cd backend
 npm install
 ```
 
-### 2. Set Up Environment Variables
+### 2. Environment Variables
 
-Copy `.env.example` to `.env`:
+Copy the example file:
 
 ```bash
 cp .env.example .env
 ```
 
-Then update the following values in `.env`:
+Then fill in your `.env` file with the actual values:
 
-#### MongoDB
-
+**MongoDB:**
 ```env
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=fablab
 ```
 
-#### Redis
-
+**Redis:**
 ```env
 REDIS_URL=redis://localhost:6379
 ```
 
-#### RabbitMQ
-
+**RabbitMQ:**
 ```env
 RABBITMQ_URL=amqp://localhost:5672
 ```
 
-#### Mailtrap (Email Testing)
+**Mailtrap (for testing emails):**
 
-1. Sign up at [mailtrap.io](https://mailtrap.io/)
-2. Create a new inbox
-3. Go to inbox settings and copy the credentials
-4. Update your `.env`:
+Go to [mailtrap.io](https://mailtrap.io/), sign up (it's free), create an inbox, and grab your SMTP credentials:
 
 ```env
 MAILTRAP_HOST=sandbox.smtp.mailtrap.io
 MAILTRAP_PORT=2525
-MAILTRAP_USER=your_username_from_mailtrap
-MAILTRAP_PASS=your_password_from_mailtrap
+MAILTRAP_USER=<your_username>
+MAILTRAP_PASS=<your_password>
 STAFF_EMAIL=fablab@stevens.edu
 ```
 
-### 3. Install and Start Services
+### 3. Start MongoDB, Redis, and RabbitMQ
 
-#### macOS (using Homebrew)
+**On Mac (with Homebrew):**
 
 ```bash
-# Install services
+# Install everything
 brew install mongodb-community redis rabbitmq
 
-# Start MongoDB
+# Start services
 brew services start mongodb-community
-
-# Start Redis
 brew services start redis
-
-# Start RabbitMQ
 brew services start rabbitmq
 ```
 
-#### Linux (Ubuntu/Debian)
+**On Linux:**
 
 ```bash
-# Install MongoDB
-sudo apt-get install mongodb
+# Install
+sudo apt-get install mongodb redis-server rabbitmq-server
 
-# Install Redis
-sudo apt-get install redis-server
-
-# Install RabbitMQ
-sudo apt-get install rabbitmq-server
-
-# Start services
+# Start
 sudo systemctl start mongodb
 sudo systemctl start redis
 sudo systemctl start rabbitmq-server
 ```
 
-#### Using Docker
+**Using Docker (if you prefer):**
 
 ```bash
-# MongoDB
 docker run -d -p 27017:27017 --name fablab-mongo mongo:latest
-
-# Redis
 docker run -d -p 6379:6379 --name fablab-redis redis:latest
-
-# RabbitMQ
 docker run -d -p 5672:5672 -p 15672:15672 --name fablab-rabbitmq rabbitmq:3-management
 ```
 
 ### 4. Seed the Database
 
+Populate MongoDB with sample services and equipment:
+
 ```bash
 npm run seed
 ```
 
-This will populate MongoDB with:
+## Running Everything
 
-- Sample services (3D printing, laser cutting, etc.)
-- Sample equipment (cameras, tripods, etc.)
-- Sample materials
+You need **2 terminal windows** open:
 
-## Running the Application
-
-You need to run **two separate processes**:
-
-### Terminal 1: API Server
-
+**Terminal 1 - API Server:**
 ```bash
 npm start
-# or for development with auto-reload:
-npm run dev
 ```
+Server runs on http://localhost:3001
 
-Server will start on `http://localhost:3001`
-
-### Terminal 2: Email Worker
-
+**Terminal 2 - Email Worker:**
 ```bash
 npm run worker
 ```
+This listens for new orders and sends emails.
 
-The worker listens for new orders and sends emails via Mailtrap.
+## Testing the Email System
 
-## Verifying Setup
-
-### Check Services Are Running
-
-```bash
-# MongoDB
-mongosh --eval "db.version()"
-
-# Redis
-redis-cli ping
-# Should return: PONG
-
-# RabbitMQ
-curl http://localhost:15672
-# Should show RabbitMQ management UI (user: guest, pass: guest)
-```
-
-### Test the Email Flow
-
-1. Start both the server and worker
+1. Make sure both terminals are running (server + worker)
 2. Create an order through the API or frontend
-3. Check the worker terminal - you should see:
-
-   ```text
-   Processing order FAB-xxx...
+3. Check the worker terminal - you should see something like:
+   ```
+   Processing order FAB-251213-1430-A7B2...
    ✓ Confirmation sent to student@stevens.edu
    ✓ Staff notification sent
    ```
+4. Go to your Mailtrap inbox - you'll see 2 emails (one for student, one for staff)
 
-4. Check your Mailtrap inbox - you should see 2 emails
+## How Redis Caching Works
 
-## Troubleshooting
+We're using Redis to cache API responses so things load faster.
 
-### RabbitMQ Connection Failed
+**What gets cached:**
+- `GET /api/services` → cached for 10 minutes
+- `GET /api/equipment` → cached for 10 minutes
 
-If you see `⚠ RabbitMQ connection failed`:
+**How it works:**
+- First request hits the database → slow
+- Response gets saved in Redis
+- Next requests read from Redis → fast!
+- Cache clears automatically when you update services/equipment
 
-1. Check RabbitMQ is running:
-
-   ```bash
-   brew services list  # macOS
-   sudo systemctl status rabbitmq-server  # Linux
-   ```
-
-2. Verify connection URL in `.env` is correct:
-
-   ```env
-   RABBITMQ_URL=amqp://localhost:5672
-   ```
-
-### Worker Not Receiving Messages
-
-1. Make sure worker is running (`npm run worker`)
-2. Check RabbitMQ management UI: <http://localhost:15672>
-   - Username: `guest`
-   - Password: `guest`
-3. Look for the `orders.created` queue - it should have messages if orders were created
-
-### Mailtrap Emails Not Sending
-
-1. Verify your Mailtrap credentials in `.env`
-2. Check the worker terminal for error messages
-3. Log into Mailtrap and verify your inbox is active
-
-### MongoDB Connection Issues
-
-```bash
-# Check if MongoDB is running
-brew services list  # macOS
-sudo systemctl status mongodb  # Linux
-
-# Try connecting manually
-mongosh mongodb://localhost:27017
+**You'll see this in the logs:**
 ```
-
-## Project Structure
-
-```text
-backend/
-├── config/          # Database and service connections
-├── data/            # Data access layer
-├── middleware/      # Auth and other middleware
-├── routes/          # API endpoints
-├── queue/           # RabbitMQ publisher
-├── worker/          # Email worker (separate process)
-├── utils/           # Image processing, helpers
-├── scripts/         # Database seed scripts
-└── server.js        # Main entry point
-```
-
-## API Endpoints
-
-See main README for full API documentation.
-
-## Image Processing (ImageMagick/Sharp)
-
-The backend uses Sharp to automatically optimize and generate thumbnails for equipment images.
-
-### Process All Equipment Images
-
-```bash
-npm run process-images
-```
-
-This script:
-
-- Finds all equipment with `imageUrl` in the database
-- Downloads/reads the images
-- Creates optimized versions (max 1200px width)
-- Generates thumbnails (300x300px)
-- Updates MongoDB with new `imageUrl` and `thumbUrl` paths
-
-### Process Single Equipment
-
-```bash
-npm run process-images <equipment-id>
-```
-
-### How It Works
-
-1. Staff uploads equipment image (via frontend or direct MongoDB insert)
-2. Run `npm run process-images` to batch process all images
-3. Script saves optimized images to `/backend/uploads/equipment/`
-4. Database updated with paths:
-   - `imageUrl`: `/backend/uploads/equipment/camera_optimized.jpg`
-   - `thumbUrl`: `/backend/uploads/equipment/camera_thumb.jpg`
-5. Frontend displays thumbnails for fast loading
-
-## Redis Caching
-
-The backend uses Redis to cache frequently accessed data for improved performance.
-
-### Cached Endpoints
-
-| Endpoint | Cache Key | TTL |
-|----------|-----------|-----|
-| `GET /api/services` | `services:all` | 10 minutes |
-| `GET /api/equipment` | `equipment:all` | 10 minutes |
-
-### Cache Invalidation
-
-Cache is automatically invalidated when data changes:
-
-- Creating/updating a service → Clears `services:*` cache
-- Creating/updating equipment → Clears `equipment:*` cache
-
-### Viewing Cache Activity
-
-Watch backend logs for cache hits/misses:
-
-```text
-✓ Cache HIT: services:all
-✗ Cache MISS: equipment:all
+✓ Cache HIT: services:all     <-- fast (from Redis)
+✗ Cache MISS: equipment:all   <-- slow (from MongoDB)
 ```
 
 ## RabbitMQ Queue System
 
-The email notification system uses RabbitMQ for asynchronous processing.
+We use RabbitMQ to send emails in the background without slowing down the API.
 
-### Queue Details
+**How it works:**
 
-**Queue Name:** `orders.created`
+1. Student submits an order → `POST /api/orders`
+2. Order gets saved to MongoDB
+3. Message gets sent to the `orders.created` queue
+4. Worker picks up the message
+5. Worker sends 2 emails (student confirmation + staff alert)
+6. Done!
 
-**Trigger:** When a new order is created via `POST /api/orders`
+**Queue details:**
+- **Queue name:** `orders.created`
+- **What triggers it:** Creating a new order
+- **What it does:** Sends confirmation emails
 
-**Message Format:**
-
+**Message format (what we send to the queue):**
 ```json
 {
   "orderId": "656f4c5a12ab34cd56ef7890",
   "orderNumber": "FAB-251213-1430-A7B2",
   "user": {
-    "firebaseUid": "firebase-uid",
     "email": "student@stevens.edu",
-    "name": "Student Name"
+    "name": "John Doe"
   },
   "totalPrice": 42.50,
   "items": [
     {
       "serviceName": "3D Print (PLA)",
-      "materialName": "PLA - standard",
       "quantity": 2,
-      "unitPrice": 21.25,
       "lineTotal": 42.50
     }
-  ],
-  "files": [
-    {
-      "url": "https://firebasestorage.googleapis.com/.../design.stl",
-      "name": "part-v1.stl"
-    }
-  ],
-  "createdAt": "2025-12-13T15:30:00.000Z"
+  ]
 }
 ```
 
-### Email Flow
+**Monitoring the queue:**
 
-1. **Order Created** → Backend publishes message to `orders.created` queue
-2. **Worker Consumes** → Email worker picks up message
-3. **Emails Sent:**
-   - Student confirmation email (order summary)
-   - Staff notification email (new order alert)
-4. **Message Acknowledged** → Removed from queue
+Go to http://localhost:15672 (username/password: guest/guest) to see the RabbitMQ dashboard and check if messages are being processed.
 
-### Monitoring Queue
+## Image Processing with ImageMagick
 
-Access RabbitMQ Management UI: <http://localhost:15672>
+We process equipment images to make them load faster on the website.
 
-- Username: `guest`
-- Password: `guest`
+**Install ImageMagick:**
 
-Check `orders.created` queue for:
-
-- Message count
-- Consumer status
-- Message rate
-
-## ImageMagick Usage
-
-The image processing script automatically detects and uses ImageMagick CLI if installed.
-
-### Installation
-
-**macOS:**
-
+Mac:
 ```bash
 brew install imagemagick
 ```
 
-**Linux:**
-
+Linux:
 ```bash
 sudo apt-get install imagemagick
 ```
 
-**Verify Installation:**
-
+Check if it's installed:
 ```bash
 convert -version
-# Should output: Version: ImageMagick 7.x.x
 ```
 
-### Processing Pipeline
+**Process images:**
+```bash
+npm run process-images
+```
 
-When you run `npm run process-images`:
+This script:
+1. Checks if you have ImageMagick installed
+2. If yes → uses ImageMagick CLI commands
+3. If no → uses Sharp (Node.js library) as backup
+4. Creates optimized images (1200px max) and thumbnails (300x300px)
+5. Updates MongoDB with the new image paths
 
-1. **Check for ImageMagick** - Script detects if `convert` command is available
-2. **Process Images:**
-   - **With ImageMagick:** Uses CLI commands (`convert`)
-   - **Without ImageMagick:** Falls back to Sharp (Node.js library)
-3. **Output:**
-   - Optimized image: 1200px max width, 90% quality
-   - Thumbnail: 300x300px cropped, 80% quality
+**ImageMagick commands we use:**
 
-### ImageMagick Commands Used
-
-**Optimize:**
-
+Optimize:
 ```bash
 convert input.jpg -resize 1200x1200> -quality 90 optimized.jpg
 ```
 
-**Thumbnail:**
-
+Thumbnail:
 ```bash
 convert input.jpg -resize 300x300^ -gravity center -extent 300x300 -quality 80 thumb.jpg
 ```
 
 ## Firebase Service Account Key
 
-**IMPORTANT:** The service account key is required for backend authentication but should **NEVER** be committed to Git.
+**Important:** Don't commit this file to GitHub!
 
-### Setup
+1. Go to Firebase Console → Project Settings → Service Accounts
+2. Click "Generate New Private Key"
+3. Save it as `backend/serviceAccountKey.json`
+4. Make sure it's in `.gitignore` (it already should be)
 
-1. Download key from Firebase Console:
-   - Go to Project Settings → Service Accounts
-   - Click "Generate New Private Key"
-2. Save as `backend/serviceAccountKey.json`
-3. Verify it's in `.gitignore`:
+The file should be here:
+```
+backend/
+├── serviceAccountKey.json  ← this file
+├── config/
+│   └── firebaseConnection.js  ← loads the key
+```
+
+## Troubleshooting
+
+**RabbitMQ won't connect:**
+- Check if it's running: `brew services list` (Mac) or `sudo systemctl status rabbitmq-server` (Linux)
+- Make sure URL in `.env` is `amqp://localhost:5672`
+
+**Worker not getting messages:**
+- Is the worker running? (`npm run worker`)
+- Go to http://localhost:15672 and check the `orders.created` queue
+
+**No emails showing up:**
+- Check your Mailtrap credentials in `.env`
+- Look at worker terminal for errors
+
+**MongoDB errors:**
+- Is MongoDB running? Try `mongosh` to connect manually
+
+## Project Structure
+
+```
+backend/
+├── config/          # MongoDB, Redis, Firebase connections
+├── data/            # Database operations
+├── middleware/      # Auth checking
+├── routes/          # API endpoints
+├── queue/           # RabbitMQ publisher
+├── worker/          # Email worker (runs separately)
+├── utils/           # Image processing, caching
+├── scripts/         # Database seeding, image processing
+├── .env             # Your secrets (DON'T COMMIT!)
+└── server.js        # Main server file
+```
+
+## Quick Commands Reference
 
 ```bash
-grep serviceAccountKey.json backend/.gitignore
-# Should output: serviceAccountKey.json
+npm start              # Start API server
+npm run worker         # Start email worker
+npm run seed           # Fill database with sample data
+npm run process-images # Process equipment images
 ```
 
-### File Location
-
-```text
-backend/
-├── serviceAccountKey.json  ← Place here (NEVER commit!)
-├── config/
-│   └── firebaseConnection.js  ← Loads the key
-```
-
-## Next Steps
-
-After setup:
-
-1. Test the API with Postman or the frontend
-2. Create test orders to verify email flow
-3. Run `npm run process-images` to generate equipment thumbnails
-4. Verify Redis caching with cache hit/miss logs
-5. Check RabbitMQ management UI for queue activity
+That's it! If you run into issues, check the troubleshooting section or ask in the Discord.
