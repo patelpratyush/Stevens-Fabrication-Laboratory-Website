@@ -1,11 +1,12 @@
 import express from "express";
 import { authenticate, requireStaff } from "../middleware/auth.js";
 import * as equipmentData from "../data/equipment.js";
+import { cacheMiddleware, deleteCachePattern, TTL } from "../utils/cache.js";
 
 const router = express.Router();
 
-// Get all active equipment (public)
-router.get("/", async (req, res) => {
+// Get all active equipment (public) - CACHED
+router.get("/", cacheMiddleware("equipment:all", TTL.TEN_MINUTES), async (req, res) => {
   try {
     const equipmentList = await equipmentData.getAllActiveEquipment();
     res.json({ equipment: equipmentList });
@@ -18,6 +19,10 @@ router.get("/", async (req, res) => {
 router.post("/", authenticate, requireStaff, async (req, res) => {
   try {
     const equipment = await equipmentData.createEquipment(req.body);
+
+    // Invalidate equipment cache
+    await deleteCachePattern("equipment:*");
+
     res.status(201).json({ equipment });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -27,12 +32,15 @@ router.post("/", authenticate, requireStaff, async (req, res) => {
 // Update equipment (staff only)
 router.patch("/:id", authenticate, requireStaff, async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id} = req.params;
     const result = await equipmentData.updateEquipment(id, req.body);
 
     if (!result) {
       return res.status(404).json({ error: "Equipment not found" });
     }
+
+    // Invalidate equipment cache
+    await deleteCachePattern("equipment:*");
 
     res.json({ equipment: result });
   } catch (error) {

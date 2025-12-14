@@ -1,4 +1,5 @@
 import { processEquipmentImage } from "../utils/imageProcessor.js";
+import { processImageWithMagick, checkImageMagick } from "../utils/imageMagick.js";
 import { equipment } from "../config/mongoCollections.js";
 import {
   connectToMongo,
@@ -41,6 +42,11 @@ async function processAllEquipmentImages() {
   try {
     console.log("🔧 Processing Equipment Images...\n");
 
+    // Check which image processor to use
+    const hasImageMagick = await checkImageMagick();
+    const processor = hasImageMagick ? 'ImageMagick CLI' : 'Sharp (Node.js)';
+    console.log(`Using: ${processor}\n`);
+
     await connectToMongo();
     const equipmentCollection = await equipment();
 
@@ -77,7 +83,18 @@ async function processAllEquipmentImages() {
           .replace(/^-|-$/g, "");
 
         // Process the image
-        const result = await processEquipmentImage(imageBuffer, safeFileName);
+        let result;
+        if (hasImageMagick) {
+          // Save buffer to temp file for ImageMagick CLI
+          const tempPath = join(__dirname, `../uploads/temp_${safeFileName}.jpg`);
+          await fs.writeFile(tempPath, imageBuffer);
+          result = await processImageWithMagick(tempPath, safeFileName);
+          // Clean up temp file
+          await fs.unlink(tempPath).catch(() => {});
+        } else {
+          // Use Sharp (Node.js library)
+          result = await processEquipmentImage(imageBuffer, safeFileName);
+        }
 
         // Update the equipment document with new paths
         await equipmentCollection.updateOne(
