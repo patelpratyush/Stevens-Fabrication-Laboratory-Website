@@ -2,17 +2,43 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, userProfile, role, logout, loading } = useAuth();
 
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/services", label: "Services" },
-    { href: "/equipment", label: "Equipment" },
-    { href: "/price-calculator", label: "Price Calculator" },
-    { href: "/order", label: "Order" },
-  ];
+  // Define navigation based on role
+  const getNavLinks = () => {
+    if (role === 'staff') {
+      return [
+        { href: "/", label: "Home" },
+        { href: "/staff/dashboard", label: "Dashboard" },
+        { href: "/staff/equipment", label: "Equipment" },
+        { href: "/staff/catalog", label: "Catalog" },
+      ];
+    }
+
+    // Student/Public navigation
+    return [
+      { href: "/", label: "Home" },
+      { href: "/services", label: "Services" },
+      { href: "/equipment", label: "Equipment" },
+      { href: "/price-calculator", label: "Price Calculator" },
+      { href: "/order", label: "Order" },
+    ];
+  };
+
+  const navLinks = getNavLinks();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setMobileMenuOpen(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,14 +70,35 @@ export default function Navigation() {
             </Link>
           ))}
 
-          {/* Login Button */}
+          {/* Auth Button */}
           <div className="ml-4 pl-4 border-l border-white/20">
-            <Link
-              href="/login"
-              className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
-            >
-              Login
-            </Link>
+            {!loading && (
+              user ? (
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-white text-sm font-medium">
+                      {userProfile?.name || user.email}
+                    </p>
+                    <p className="text-white/60 text-xs capitalize">
+                      {role || 'student'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
+                >
+                  Login
+                </Link>
+              )
+            )}
           </div>
         </div>
 
@@ -84,13 +131,34 @@ export default function Navigation() {
             </Link>
           ))}
           <div className="pt-2 border-t border-white/20">
-            <Link
-              href="/login"
-              className="block px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Login
-            </Link>
+            {!loading && (
+              user ? (
+                <>
+                  <div className="px-4 py-2 text-white">
+                    <p className="text-sm font-medium">
+                      {userProfile?.name || user.email}
+                    </p>
+                    <p className="text-white/60 text-xs capitalize">
+                      {role || 'student'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center mt-2"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )
+            )}
           </div>
         </div>
       )}

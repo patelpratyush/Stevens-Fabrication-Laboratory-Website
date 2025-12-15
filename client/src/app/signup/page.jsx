@@ -9,10 +9,25 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [birthdate, setBirthdate] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { signup } = useAuth();
+
+  // Calculate age from birthdate
+  function calculateAge(birthdate) {
+    const today = new Date();
+    const birthDate = new Date(birthdate);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,6 +39,16 @@ export default function SignupPage() {
 
     if (password.length < 6) {
       return setError('Password must be at least 6 characters');
+    }
+
+    // COPPA Compliance: Validate age >= 13
+    if (!birthdate) {
+      return setError('Please enter your date of birth');
+    }
+
+    const age = calculateAge(birthdate);
+    if (age < 13) {
+      return setError('You must be at least 13 years old to create an account (COPPA compliance)');
     }
 
     try {
@@ -120,6 +145,27 @@ export default function SignupPage() {
           />
           <p className="text-xs text-gray-500 mt-1">
             Must be at least 6 characters
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="birthdate"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Date of Birth
+          </label>
+          <input
+            id="birthdate"
+            type="date"
+            required
+            value={birthdate}
+            onChange={(e) => setBirthdate(e.target.value)}
+            max={new Date().toISOString().split('T')[0]}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stevens-maroon"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            You must be at least 13 years old (COPPA compliance)
           </p>
         </div>
 

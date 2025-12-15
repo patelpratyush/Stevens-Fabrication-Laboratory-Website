@@ -101,6 +101,14 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
+  // Get Firebase ID token
+  async function getIdToken() {
+    if (!user) {
+      throw new Error('No user logged in');
+    }
+    return await user.getIdToken();
+  }
+
   const value = {
     user,
     userProfile,
@@ -108,7 +116,8 @@ export function AuthProvider({ children }) {
     loading,
     signup,
     login,
-    logout
+    logout,
+    getIdToken
   };
 
   return (
