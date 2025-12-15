@@ -1,142 +1,96 @@
+'use client';
+
+import { useState } from 'react';
+import { useServices } from '@/hooks/useServices';
+import ServiceTable from '@/components/staff/ServiceTable';
+import ServiceForm from '@/components/staff/ServiceForm';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import ErrorMessage from '@/components/shared/ErrorMessage';
+import { StaffOnly } from '@/components/shared/ProtectedRoute';
+
 export default function CatalogManagementPage() {
+  return (
+    <StaffOnly>
+      <CatalogContent />
+    </StaffOnly>
+  );
+}
+
+function CatalogContent() {
+  const { services, loading, error, refetch, createService, updateService } = useServices();
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [editingService, setEditingService] = useState(null);
+
+  function handleAddService() {
+    setEditingService(null);
+    setShowServiceForm(true);
+  }
+
+  function handleEditService(service) {
+    setEditingService(service);
+    setShowServiceForm(true);
+  }
+
+  async function handleSubmitService(formData) {
+    try {
+      if (editingService) {
+        await updateService(editingService._id, formData);
+      } else {
+        await createService(formData);
+      }
+      setShowServiceForm(false);
+      setEditingService(null);
+    } catch (error) {
+      throw error; // Let ServiceForm handle the error display
+    }
+  }
+
+  function handleCancelForm() {
+    setShowServiceForm(false);
+    setEditingService(null);
+  }
+
   return (
     <section>
       <h1 className="text-3xl font-bold mb-4 text-stevens-maroon">
         Catalog Management
       </h1>
       <p className="text-gray-700 mb-8">
-        Manage services, materials, equipment pricing, and availability. Update
-        catalog items and pricing tiers.
+        Manage services, materials, and pricing. Add new offerings or update existing ones.
       </p>
 
       {/* Services Section */}
       <div className="mb-8 border-2 border-stevens-maroon rounded-lg p-6 bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-stevens-maroon">
-            Services
-          </h2>
-          <button className="px-4 py-2 bg-stevens-maroon text-white rounded hover:bg-stevens-maroon-dark text-sm">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-stevens-maroon">Services & Materials</h2>
+          <button
+            onClick={handleAddService}
+            className="px-4 py-2 bg-stevens-maroon text-white rounded hover:bg-stevens-maroon-dark text-sm font-medium"
+          >
             + Add Service
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Service Name
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Category
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Base Price
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              <tr>
-                <td colSpan="5" className="px-4 py-8 text-sm text-gray-500 text-center">
-                  No services available
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {loading ? (
+          <LoadingSpinner text="Loading services..." />
+        ) : error ? (
+          <ErrorMessage message={error} onRetry={refetch} />
+        ) : (
+          <ServiceTable
+            services={services}
+            onEdit={handleEditService}
+          />
+        )}
       </div>
 
-      {/* Materials Section */}
-      <div className="mb-8 border-2 border-stevens-maroon rounded-lg p-6 bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-stevens-maroon">
-            Materials
-          </h2>
-          <button className="px-4 py-2 bg-stevens-maroon text-white rounded hover:bg-stevens-maroon-dark text-sm">
-            + Add Material
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Material Name
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Type
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Price/Unit
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Stock
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              <tr>
-                <td colSpan="5" className="px-4 py-8 text-sm text-gray-500 text-center">
-                  No materials available
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Equipment Section */}
-      <div className="border-2 border-stevens-maroon rounded-lg p-6 bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-stevens-maroon">
-            Equipment
-          </h2>
-          <button className="px-4 py-2 bg-stevens-maroon text-white rounded hover:bg-stevens-maroon-dark text-sm">
-            + Add Equipment
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Equipment Name
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Type
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Hourly Rate
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              <tr>
-                <td colSpan="5" className="px-4 py-8 text-sm text-gray-500 text-center">
-                  No equipment available
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Service Form Modal */}
+      {showServiceForm && (
+        <ServiceForm
+          service={editingService}
+          onSubmit={handleSubmitService}
+          onCancel={handleCancelForm}
+        />
+      )}
     </section>
   );
 }

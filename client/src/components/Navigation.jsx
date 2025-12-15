@@ -2,17 +2,52 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, userProfile, logout } = useAuth();
 
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/services", label: "Services" },
-    { href: "/equipment", label: "Equipment" },
-    { href: "/price-calculator", label: "Price Calculator" },
-    { href: "/order", label: "Order" },
-  ];
+  // Determine which nav links to show based on role
+  const getNavLinks = () => {
+    if (!user) {
+      // Not logged in - public links
+      return [
+        { href: "/", label: "Home" },
+        { href: "/price-calculator", label: "Price Calculator" },
+      ];
+    }
+
+    if (userProfile?.role === 'staff') {
+      // Staff navigation
+      return [
+        { href: "/staff/dashboard", label: "Dashboard" },
+        { href: "/staff/orders", label: "Orders" },
+        { href: "/staff/catalog", label: "Services" },
+        { href: "/staff/equipment", label: "Equipment" },
+        { href: "/staff/checkouts", label: "Checkouts" },
+      ];
+    }
+
+    // Student navigation (default)
+    return [
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/equipment", label: "Equipment" },
+      { href: "/orders", label: "Orders" },
+      { href: "/price-calculator", label: "Price Calculator" },
+    ];
+  };
+
+  const navLinks = getNavLinks();
+
+  async function handleLogout() {
+    try {
+      await logout();
+      setMobileMenuOpen(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }
 
   return (
     <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,14 +79,37 @@ export default function Navigation() {
             </Link>
           ))}
 
-          {/* Login Button */}
+          {/* Auth Button */}
           <div className="ml-4 pl-4 border-l border-white/20">
-            <Link
-              href="/login"
-              className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
-            >
-              Login
-            </Link>
+            {user ? (
+              <div className="flex items-center space-x-3">
+                {/* User Info */}
+                <div className="text-right">
+                  <div className="text-white text-sm font-medium">
+                    {userProfile?.name || user.email?.split('@')[0]}
+                  </div>
+                  {userProfile?.role && (
+                    <div className="text-white/60 text-xs capitalize">
+                      {userProfile.role}
+                    </div>
+                  )}
+                </div>
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-all"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
 
@@ -84,13 +142,30 @@ export default function Navigation() {
             </Link>
           ))}
           <div className="pt-2 border-t border-white/20">
-            <Link
-              href="/login"
-              className="block px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Login
-            </Link>
+            {user ? (
+              <>
+                <div className="px-4 py-2 text-white/60 text-sm">
+                  {userProfile?.name || user.email?.split('@')[0]}
+                  {userProfile?.role && (
+                    <span className="ml-2 capitalize">({userProfile.role})</span>
+                  )}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-2 bg-white/10 text-white rounded-lg font-semibold text-center"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="block px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       )}
