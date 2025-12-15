@@ -77,6 +77,16 @@ export default function OrdersPage() {
     return sum + (item.pricePerUnit * item.quantity);
   }, 0);
 
+  // Group services by category
+  const servicesByCategory = services.reduce((acc, service) => {
+    const category = service.category || 'Other';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(service);
+    return acc;
+  }, {});
+
   // Submit order
   async function handleSubmitOrder() {
     if (cart.length === 0) {
@@ -154,7 +164,7 @@ export default function OrdersPage() {
     <section>
       <h1 className="text-3xl font-bold mb-4">Create an Order</h1>
       <p className="text-gray-600 mb-8">
-        Select services, upload your design files, and submit your order
+        Browse services, estimate costs, and submit your order with design files
       </p>
 
       {/* Success/Error Messages */}
@@ -180,33 +190,41 @@ export default function OrdersPage() {
             ) : services.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No services available</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {services.map((service) => (
-                  <div
-                    key={service._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-stevens-maroon transition"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{service.name}</h3>
-                        <p className="text-sm text-gray-600">{service.category}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-stevens-maroon">
-                          {formatCurrency(service.pricePerUnit)}
-                        </p>
-                        <p className="text-xs text-gray-500">per {service.unitLabel}</p>
-                      </div>
+              <div className="space-y-6">
+                {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
+                  <div key={category}>
+                    <h3 className="text-lg font-semibold text-stevens-maroon mb-3">
+                      {category}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {categoryServices.map((service) => (
+                        <div
+                          key={service._id}
+                          className="border border-gray-200 rounded-lg p-4 hover:border-stevens-maroon transition"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">{service.name}</h4>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-stevens-maroon text-sm">
+                                {formatCurrency(service.pricePerUnit)}
+                              </p>
+                              <p className="text-xs text-gray-500">per {service.unitLabel}</p>
+                            </div>
+                          </div>
+                          {service.description && (
+                            <p className="text-xs text-gray-600 mb-3">{service.description}</p>
+                          )}
+                          <button
+                            onClick={() => handleAddToCart(service)}
+                            className="w-full px-4 py-2 bg-stevens-maroon text-white rounded hover:bg-red-800 text-sm font-medium transition"
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                    {service.description && (
-                      <p className="text-xs text-gray-600 mb-3">{service.description}</p>
-                    )}
-                    <button
-                      onClick={() => handleAddToCart(service)}
-                      className="w-full px-4 py-2 bg-stevens-maroon text-white rounded hover:bg-red-800 text-sm font-medium transition"
-                    >
-                      Add to Cart
-                    </button>
                   </div>
                 ))}
               </div>
@@ -257,9 +275,7 @@ export default function OrdersPage() {
           <div className="bg-white rounded-lg shadow p-6 sticky top-4">
             <h2 className="text-xl font-semibold mb-4">Your Cart</h2>
 
-            {cart.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Cart is empty</p>
-            ) : (
+            {cart.length > 0 && (
               <>
                 <div className="space-y-3 mb-4">
                   {cart.map((item) => (
@@ -361,7 +377,32 @@ export default function OrdersPage() {
                 >
                   {submitting ? 'Submitting...' : 'Submit Order'}
                 </button>
+
+                {/* Pricing Notes */}
+                <div className="mt-6 pt-6 border-t">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                    Pricing Notes
+                  </h3>
+                  <ul className="text-xs text-gray-600 space-y-1">
+                    <li>• Prices shown are base rates</li>
+                    <li>• Additional fees may apply for complex designs</li>
+                    <li>• Rush orders incur a 25% surcharge</li>
+                    <li>• Contact staff for bulk discounts</li>
+                  </ul>
+                </div>
               </>
+            )}
+
+            {cart.length === 0 && (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-2">🛒</div>
+                <p className="text-gray-500 text-sm mb-4">
+                  Your cart is empty
+                </p>
+                <p className="text-xs text-gray-400">
+                  Add services from the left to estimate costs and create your order
+                </p>
+              </div>
             )}
           </div>
         </div>

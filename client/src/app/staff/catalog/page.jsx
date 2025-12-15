@@ -9,7 +9,7 @@ import { formatCurrency } from '@/utils/formatters';
 
 export default function CatalogManagementPage() {
   const { services, loading: servicesLoading, error: servicesError, refetch: refetchServices, createService, updateService } = useServices();
-  const { equipment, loading: equipmentLoading, error: equipmentError, refetch: refetchEquipment } = useEquipment();
+  const { equipment, loading: equipmentLoading, error: equipmentError, refetch: refetchEquipment, updateEquipment } = useEquipment();
 
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
@@ -23,6 +23,10 @@ export default function CatalogManagementPage() {
     pricePerUnit: 0,
     unitLabel: '',
   });
+
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
 
   // Separate services and materials
   const servicesList = services.filter(s => s.type === 'service');
@@ -72,6 +76,29 @@ export default function CatalogManagementPage() {
       }
       handleCloseServiceModal();
       await refetchServices();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  const handleOpenStatusModal = (equipment) => {
+    setEditingEquipment(equipment);
+    setNewStatus(equipment.status);
+    setShowStatusModal(true);
+  };
+
+  const handleCloseStatusModal = () => {
+    setShowStatusModal(false);
+    setEditingEquipment(null);
+    setNewStatus('');
+  };
+
+  const handleStatusSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateEquipment(editingEquipment._id, { status: newStatus });
+      handleCloseStatusModal();
+      await refetchEquipment();
     } catch (error) {
       alert(`Error: ${error.message}`);
     }
