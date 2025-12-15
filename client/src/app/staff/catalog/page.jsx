@@ -340,7 +340,10 @@ export default function CatalogManagementPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <button className="text-gray-400 cursor-not-allowed">
+                        <button
+                          onClick={() => handleOpenStatusModal(item)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
                           Edit
                         </button>
                       </td>
@@ -493,6 +496,62 @@ export default function CatalogManagementPage() {
                     className="px-4 py-2 bg-stevens-maroon text-white rounded-md hover:bg-red-800"
                   >
                     {editingService ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Equipment Status Modal */}
+      {showStatusModal && editingEquipment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold mb-4 text-stevens-maroon">
+                Update Equipment Status
+              </h3>
+
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Equipment:</p>
+                <p className="font-semibold">{editingEquipment.name}</p>
+              </div>
+
+              <form onSubmit={handleStatusSubmit}>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status *
+                  </label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-stevens-maroon"
+                    required
+                  >
+                    <option value="available">Available</option>
+                    <option value="checked_out">Checked Out</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="offline">Offline</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Change equipment availability status
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseStatusModal}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-stevens-maroon text-white rounded-md hover:bg-red-800"
+                  >
+                    Update Status
                   </button>
                 </div>
               </form>
