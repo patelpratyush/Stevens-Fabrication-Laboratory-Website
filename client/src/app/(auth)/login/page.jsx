@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login, role } = useAuth();
+  const { login } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -19,24 +19,20 @@ export default function LoginPage() {
     try {
       setError('');
       setLoading(true);
+      
+      // Login with Firebase
       await login(email, password);
 
-      // Wait for userProfile to load, then redirect based on role
-      setTimeout(() => {
-        // Check localStorage for role if context hasn't updated yet
-        const storedUser = localStorage.getItem('userRole');
-        const userRole = role || storedUser;
-
-        if (userRole === 'staff') {
-          router.push('/staff/dashboard');
-        } else {
-          router.push('/dashboard');
-        }
-      }, 1000);
+      // Give AuthContext time to fetch user profile
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // After login, redirect to appropriate dashboard
+      // The ProtectedRoute will handle the actual role-based redirect
+      router.push('/dashboard');
+      
     } catch (error) {
       setError('Failed to log in. Please check your credentials.');
       console.error(error);
-    } finally {
       setLoading(false);
     }
   }
@@ -103,7 +99,7 @@ export default function LoginPage() {
 
         <p className="text-xs text-gray-500 text-center mt-4">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-stevens-maroon hover:underline">
+          <Link href="/auth/signup" className="text-stevens-maroon hover:underline">
             Sign up
           </Link>
         </p>

@@ -34,17 +34,16 @@ export function AuthProvider({ children }) {
           firebaseUid: firebaseUser.uid,
           email: firebaseUser.email,
           name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-          role: 'student' // Default role
         })
       });
 
       if (response.ok) {
         const data = await response.json();
         setUserProfile(data.user);
-        // Store role in localStorage for quick access
-        if (data.user?.role) {
-          localStorage.setItem('userRole', data.user.role);
-        }
+        console.log('✅ User profile loaded:', data.user);
+        return data.user;
+      } else {
+        console.error('❌ Failed to fetch user profile');
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -57,7 +56,7 @@ export function AuthProvider({ children }) {
 
     // Create profile in backend (backend determines role)
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    await fetch(`${apiUrl}/api/auth/register`, {
+    const response = await fetch(`${apiUrl}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -68,6 +67,11 @@ export function AuthProvider({ children }) {
         name: name
       })
     });
+
+    if (response.ok) {
+      const data = await response.json();
+      setUserProfile(data.user);
+    }
 
     return userCredential;
   }
@@ -80,13 +84,15 @@ export function AuthProvider({ children }) {
   // Logout
   function logout() {
     setUserProfile(null);
-    localStorage.removeItem('userRole');
     return signOut(auth);
   }
 
   // Listen for auth state changes
   useEffect(() => {
+    console.log('🔍 Setting up auth listener...');
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🔄 Auth state changed:', firebaseUser ? 'User logged in' : 'No user');
       setUser(firebaseUser);
 
       if (firebaseUser) {
