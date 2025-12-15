@@ -3,7 +3,7 @@ import { processImageWithMagick, checkImageMagick } from "../utils/imageMagick.j
 import { equipment } from "../config/mongoCollections.js";
 import {
   connectToMongo,
-  closeMongoConnection,
+  closeConnection,
 } from "../config/mongoConnection.js";
 import https from "https";
 import http from "http";
@@ -128,7 +128,7 @@ async function processAllEquipmentImages() {
     console.error("Failed to process equipment images:", error);
     process.exit(1);
   } finally {
-    await closeMongoConnection();
+    await closeConnection();
   }
 }
 
@@ -185,7 +185,7 @@ async function processSingleEquipment(equipmentId) {
     console.error("Failed to process equipment image:", error);
     process.exit(1);
   } finally {
-    await closeMongoConnection();
+    await closeConnection();
   }
 }
 
