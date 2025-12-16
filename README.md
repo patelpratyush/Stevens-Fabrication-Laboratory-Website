@@ -217,35 +217,28 @@ Command-line tool for image processing. Optimizes equipment photos and generates
 
 ## Test Users & Login Credentials
 
-The seed script creates the following test accounts. **You must create these users in Firebase Authentication before they can log in:**
-
 ### Creating Test Users in Firebase
+
+Before testing, create these users in Firebase Authentication:
 
 1. Go to [Firebase Console](https://console.firebase.google.com/project/stevens-fabrication-laboratory/authentication/users)
 2. Click "Add User"
-3. Create each user with their email and any password (e.g., "password123")
-
-### Test Accounts
+3. Create these 2 users:
 
 **Staff Account:**
-- Email: `kbyrne3@stevens.edu`
-- Name: Kevin Byrne
-- Role: staff
-- Can: Manage orders, approve checkouts, manage equipment inventory
+- Email: `staff@stevens.edu`
+- Password: `password123`
 
-**Student Accounts:**
-- Email: `jsmith@stevens.edu` (John Smith)
-- Email: `mjohnson@stevens.edu` (Mary Johnson)
-- Email: `dwilliams@stevens.edu` (David Williams)
-- Role: student
-- Can: Create orders, request equipment checkouts, view their history
+**Student Account:**
+- Email: `student@stevens.edu`
+- Password: `password123`
 
 ## Testing Guide
 
 ### 1. Testing Order Flow
 
 **As a Student:**
-1. Log in with `jsmith@stevens.edu`
+1. Log in with `student@stevens.edu`
 2. Navigate to "Services" page
 3. Click on a service (e.g., "PLA 3D Print")
 4. Enter quantity (e.g., 100 grams)
@@ -255,7 +248,7 @@ The seed script creates the following test accounts. **You must create these use
 8. Navigate to "My Orders" to see your order with status "submitted"
 
 **As Staff:**
-1. Log in with `kbyrne3@stevens.edu`
+1. Log in with `staff@stevens.edu`
 2. Navigate to "Orders" page
 3. You should see all pending orders including the one you just created
 4. Click on an order to view details
@@ -271,7 +264,7 @@ The seed script creates the following test accounts. **You must create these use
 ### 2. Testing Equipment Checkout Flow
 
 **As a Student:**
-1. Log in with `mjohnson@stevens.edu`
+1. Log in with `student@stevens.edu`
 2. Navigate to "Equipment" page
 3. Find an available piece of equipment (green badge)
 4. Click "Request Checkout"
@@ -281,7 +274,7 @@ The seed script creates the following test accounts. **You must create these use
 8. Navigate to "My Checkouts" to see status "pending"
 
 **As Staff:**
-1. Log in with `kbyrne3@stevens.edu`
+1. Log in with `staff@stevens.edu`
 2. Navigate to "Checkouts" page
 3. View pending checkout requests
 4. Click "Approve" or "Deny" with reason
@@ -296,7 +289,7 @@ The seed script creates the following test accounts. **You must create these use
 ### 3. Testing Equipment Management
 
 **As Staff:**
-1. Log in with `kbyrne3@stevens.edu`
+1. Log in with `staff@stevens.edu`
 2. Navigate to "Equipment" page
 3. Click "Add Equipment"
 4. Fill in details:

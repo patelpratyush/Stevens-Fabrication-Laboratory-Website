@@ -4,10 +4,8 @@ import { ObjectId } from 'mongodb';
 
 // Sample Firebase UIDs (in real app, these would come from Firebase Auth)
 const FIREBASE_UIDS = {
-  staff1: 'firebase_staff_001',
-  student1: 'firebase_student_001',
-  student2: 'firebase_student_002',
-  student3: 'firebase_student_003'
+  staff: 'firebase_staff_001',
+  student: 'firebase_student_001'
 };
 
 async function seedDatabase() {
@@ -35,36 +33,20 @@ async function seedDatabase() {
     
     const usersData = [
       {
-        firebaseUid: FIREBASE_UIDS.staff1,
-        email: 'kbyrne3@stevens.edu',
-        name: 'Kevin Byrne',
+        firebaseUid: FIREBASE_UIDS.staff,
+        email: 'staff@stevens.edu',
+        name: 'Staff User',
         role: 'staff',
         createdAt: new Date('2024-01-15'),
         updatedAt: new Date('2024-01-15')
       },
       {
-        firebaseUid: FIREBASE_UIDS.student1,
-        email: 'jsmith@stevens.edu',
-        name: 'John Smith',
+        firebaseUid: FIREBASE_UIDS.student,
+        email: 'student@stevens.edu',
+        name: 'Student User',
         role: 'student',
         createdAt: new Date('2024-09-01'),
         updatedAt: new Date('2024-09-01')
-      },
-      {
-        firebaseUid: FIREBASE_UIDS.student2,
-        email: 'mjohnson@stevens.edu',
-        name: 'Mary Johnson',
-        role: 'student',
-        createdAt: new Date('2024-09-03'),
-        updatedAt: new Date('2024-09-03')
-      },
-      {
-        firebaseUid: FIREBASE_UIDS.student3,
-        email: 'dwilliams@stevens.edu',
-        name: 'David Williams',
-        role: 'student',
-        createdAt: new Date('2024-09-05'),
-        updatedAt: new Date('2024-09-05')
       }
     ];
 
@@ -285,7 +267,7 @@ async function seedDatabase() {
     const ordersData = [
       {
         orderNumber: 'FAB-241201-1420-X7K9',
-        firebaseUid: FIREBASE_UIDS.student1,
+        firebaseUid: FIREBASE_UIDS.student,
         userId: userIds[1],
         items: [
           {
@@ -305,8 +287,8 @@ async function seedDatabase() {
       },
       {
         orderNumber: 'FAB-241205-0930-B2M4',
-        firebaseUid: FIREBASE_UIDS.student2,
-        userId: userIds[2],
+        firebaseUid: FIREBASE_UIDS.student,
+        userId: userIds[1],
         items: [
           {
             serviceId: serviceIds[3], // Acrylic Laser Cut
@@ -325,8 +307,8 @@ async function seedDatabase() {
       },
       {
         orderNumber: 'FAB-241210-1615-P9L3',
-        firebaseUid: FIREBASE_UIDS.student3,
-        userId: userIds[3],
+        firebaseUid: FIREBASE_UIDS.student,
+        userId: userIds[1],
         items: [
           {
             serviceId: serviceIds[1], // ABS 3D Print
@@ -352,7 +334,7 @@ async function seedDatabase() {
       },
       {
         orderNumber: 'FAB-241212-1045-T5N8',
-        firebaseUid: FIREBASE_UIDS.student1,
+        firebaseUid: FIREBASE_UIDS.student,
         userId: userIds[1],
         items: [
           {
@@ -382,7 +364,7 @@ async function seedDatabase() {
       // Approved checkout (student has equipment)
       {
         equipmentId: equipmentIds[3], // Soldering Station (status: checked_out)
-        firebaseUid: FIREBASE_UIDS.student2,
+        firebaseUid: FIREBASE_UIDS.student,
         requestDate: new Date('2024-12-08T09:00:00'),
         checkoutDate: new Date('2024-12-08T10:30:00'),
         dueDate: new Date('2024-12-15T17:00:00'),
@@ -395,7 +377,7 @@ async function seedDatabase() {
       // Pending checkout
       {
         equipmentId: equipmentIds[4], // Oscilloscope
-        firebaseUid: FIREBASE_UIDS.student3,
+        firebaseUid: FIREBASE_UIDS.student,
         requestDate: new Date('2024-12-12T14:00:00'),
         checkoutDate: null,
         dueDate: new Date('2024-12-18T17:00:00'),
@@ -405,23 +387,10 @@ async function seedDatabase() {
         createdAt: new Date('2024-12-12T14:00:00'),
         updatedAt: new Date('2024-12-12T14:00:00')
       },
-      // Another pending checkout for same equipment
-      {
-        equipmentId: equipmentIds[4], // Oscilloscope
-        firebaseUid: FIREBASE_UIDS.student1,
-        requestDate: new Date('2024-12-13T10:00:00'),
-        checkoutDate: null,
-        dueDate: new Date('2024-12-20T17:00:00'),
-        returnedDate: null,
-        status: 'pending',
-        notes: 'Final project debugging',
-        createdAt: new Date('2024-12-13T10:00:00'),
-        updatedAt: new Date('2024-12-13T10:00:00')
-      },
       // Returned checkout (past)
       {
         equipmentId: equipmentIds[5], // Heat Gun
-        firebaseUid: FIREBASE_UIDS.student1,
+        firebaseUid: FIREBASE_UIDS.student,
         requestDate: new Date('2024-11-20T11:00:00'),
         checkoutDate: new Date('2024-11-20T13:00:00'),
         dueDate: new Date('2024-11-25T17:00:00'),
@@ -434,7 +403,7 @@ async function seedDatabase() {
       // Denied checkout
       {
         equipmentId: equipmentIds[6], // Dremel (status: maintenance)
-        firebaseUid: FIREBASE_UIDS.student2,
+        firebaseUid: FIREBASE_UIDS.student,
         requestDate: new Date('2024-12-11T10:00:00'),
         checkoutDate: null,
         dueDate: new Date('2024-12-16T17:00:00'),
@@ -453,18 +422,16 @@ async function seedDatabase() {
     // ==================== SUMMARY ====================
     console.log(' Seed completed successfully!\n');
     console.log(' Summary:');
-    console.log(`   Users: ${usersData.length} (1 staff, 3 students)`);
+    console.log(`   Users: ${usersData.length} (1 staff, 1 student)`);
     console.log(`   Services: ${servicesData.length} (3D printing, laser cutting, etc.)`);
     console.log(`   Equipment: ${equipmentData.length} (3 available, 1 checked out, 1 maintenance)`);
     console.log(`   Orders: ${ordersData.length} (2 submitted, 1 in-progress, 1 completed)`);
-    console.log(`   Checkouts: ${checkoutsData.length} (2 pending, 1 approved, 1 returned, 1 denied)\n`);
-    
-    console.log(' Test Credentials (Firebase UIDs):');
-    console.log('   Staff:    kbyrne3@stevens.edu');
-    console.log('   Student1: jsmith@stevens.edu');
-    console.log('   Student2: mjohnson@stevens.edu');
-    console.log('   Student3: dwilliams@stevens.edu\n');
-    
+    console.log(`   Checkouts: ${checkoutsData.length} (1 pending, 1 approved, 1 returned, 1 denied)\n`);
+
+    console.log(' Test Credentials:');
+    console.log('   Staff:   staff@stevens.edu');
+    console.log('   Student: student@stevens.edu\n');
+
     console.log(' Note: You\'ll need to create these users in Firebase Auth');
     console.log('   with the same emails to test the full flow.\n');
 

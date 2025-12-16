@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Staff emails list - CONTROLLED BY BACKEND
 const STAFF_EMAILS = [
-  'kbyrne3@stevens.edu',  // Lab staff
+  'staff@stevens.edu',    // Test staff account
   'ppatel10@stevens.edu', // Pratyush Patel (Team)
   'jcairns@stevens.edu',  // Jasmine Cairns (Team)
   'damin@stevens.edu',    // David Amin (Team)
