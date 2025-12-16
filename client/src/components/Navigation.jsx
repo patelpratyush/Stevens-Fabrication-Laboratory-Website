@@ -10,7 +10,6 @@ export default function Navigation() {
     { href: "/", label: "Home" },
     { href: "/services", label: "Services" },
     { href: "/equipment", label: "Equipment" },
-    { href: "/price-calculator", label: "Price Calculator" },
     { href: "/order", label: "Order" },
   ];
 
