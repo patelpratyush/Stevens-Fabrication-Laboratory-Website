@@ -58,13 +58,14 @@ async function seedDatabase() {
     console.log(' Seeding services...');
     
     const servicesData = [
-      // 3D Printing
+      // ==================== 3D PRINTING ====================
+      // FDM Printing
       {
-        name: 'PLA 3D Print',
+        name: 'FDM 3D Print - PLA',
         category: '3D Printing',
         type: 'material',
         status: 'available',
-        description: 'Standard PLA filament 3D printing. Available in multiple colors.',
+        description: 'FDM 3D printing with PLA filament. Available colors: Black, White, Silver, Blue, Tan, Blue Raspberry, Raspberry Gold. Bambu Lab X1-Carbon printer.',
         priceType: 'per_unit',
         basePrice: 0,
         pricePerUnit: 0.10,
@@ -74,7 +75,7 @@ async function seedDatabase() {
         updatedAt: new Date()
       },
       {
-        name: 'ABS 3D Print',
+        name: 'FDM 3D Print - ABS',
         category: '3D Printing',
         type: 'material',
         status: 'available',
@@ -88,7 +89,7 @@ async function seedDatabase() {
         updatedAt: new Date()
       },
       {
-        name: 'PETG 3D Print',
+        name: 'FDM 3D Print - PETG',
         category: '3D Printing',
         type: 'material',
         status: 'available',
@@ -101,45 +102,301 @@ async function seedDatabase() {
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      // Laser Cutting
+      // SLA Printing
       {
-        name: 'Acrylic Laser Cut',
-        category: 'Laser Cutting',
+        name: 'SLA Resin Print',
+        category: '3D Printing',
         type: 'material',
         status: 'available',
-        description: '1/8" clear acrylic laser cutting.',
+        description: 'High-resolution resin printing. Available colors: Smokey Black, Opaque White. Water washable photopolymer resin. Elegoo Mars 3 Pro 4K printer.',
         priceType: 'per_unit',
-        basePrice: 5.00,
-        pricePerUnit: 0.50,
-        unitLabel: 'square inch',
-        laserMetadata: {
-          thickness: '1/8"',
-          material: 'acrylic',
-          colors: ['clear', 'black', 'white', 'red', 'blue']
-        },
+        basePrice: 0,
+        pricePerUnit: 0.10,
+        unitLabel: 'gram',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+
+      // ==================== LASER PRINTING ====================
+      // Black & White - Standard Paper
+      {
+        name: 'Laser Print - B&W Standard 8.5x11',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Black & White print on standard 20 LB paper. Xerox VersaLink C7100.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.05,
+        unitLabel: 'page',
         active: true,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        name: 'Wood Laser Cut',
-        category: 'Laser Cutting',
-        type: 'material',
+        name: 'Laser Print - B&W Standard 11x17',
+        category: 'Laser Printing',
+        type: 'service',
         status: 'available',
-        description: '1/4" plywood laser cutting and engraving.',
+        description: 'Black & White tabloid print on standard 20 LB paper.',
         priceType: 'per_unit',
-        basePrice: 3.00,
-        pricePerUnit: 0.30,
-        unitLabel: 'square inch',
-        laserMetadata: {
-          thickness: '1/4"',
-          material: 'plywood'
-        },
+        basePrice: 0,
+        pricePerUnit: 0.10,
+        unitLabel: 'page',
         active: true,
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      // Services
+      // Black & White - Premium Paper
+      {
+        name: 'Laser Print - B&W Premium 8.5x11',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Black & White print on premium 24 LB paper.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.05,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Print - B&W Premium 11x17',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Black & White tabloid print on premium 28 LB paper.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.10,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      // Black & White - Premium Cover
+      {
+        name: 'Laser Print - B&W Cover 8.5x11',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Black & White print on premium 80 LB cover stock.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.15,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Print - B&W Cover 11x17',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Black & White tabloid print on premium 80 LB cover stock.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.20,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      // Color - Standard Paper
+      {
+        name: 'Laser Print - Color Standard 8.5x11',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Color print on standard 20 LB paper.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.15,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Print - Color Standard 11x17',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Color tabloid print on standard 20 LB paper.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.25,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      // Color - Premium Paper
+      {
+        name: 'Laser Print - Color Premium 8.5x11',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Color print on premium 24 LB paper.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.15,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Print - Color Premium 11x17',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Color tabloid print on premium 28 LB paper.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.25,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      // Color - Premium Cover
+      {
+        name: 'Laser Print - Color Cover 8.5x11',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Color print on premium 80 LB cover stock.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.25,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Print - Color Cover 11x17',
+        category: 'Laser Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Color tabloid print on premium 80 LB cover stock.',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 0.35,
+        unitLabel: 'page',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+
+      // ==================== LARGE-FORMAT PRINTING ====================
+      {
+        name: 'Large-Format Inkjet Print',
+        category: 'Large-Format Printing',
+        type: 'service',
+        status: 'available',
+        description: 'Large-format inkjet printing on Epson Stylus Pro 9900. Available papers: Premium Luster, Premium Glossy, Enhanced Matte. Widths: 24" or 44". Price is per square foot of paper used (not just printed area).',
+        priceType: 'per_unit',
+        basePrice: 0,
+        pricePerUnit: 3.50,
+        unitLabel: 'square foot',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+
+      // ==================== LASER CUTTING ====================
+      {
+        name: 'Laser Cut - Acrylic (Clear)',
+        category: 'Laser Cutting',
+        type: 'material',
+        status: 'available',
+        description: 'Clear acrylic laser cutting. 8.5" × 15.75" × 0.25". Universal Laser Systems VLS4.60.',
+        priceType: 'fixed',
+        basePrice: 17.00,
+        pricePerUnit: 0,
+        unitLabel: 'sheet',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Cut - Acrylic (Colored)',
+        category: 'Laser Cutting',
+        type: 'material',
+        status: 'available',
+        description: 'Colored acrylic laser cutting (Fluorescent Amber/Gray, Opaque Red/Green/White/Black). 12" × 24" × 0.125".',
+        priceType: 'fixed',
+        basePrice: 16.00,
+        pricePerUnit: 0,
+        unitLabel: 'sheet',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Cut - Bamboo Plywood',
+        category: 'Laser Cutting',
+        type: 'material',
+        status: 'available',
+        description: 'Bamboo plywood laser cutting and engraving.',
+        priceType: 'fixed',
+        basePrice: 19.00,
+        pricePerUnit: 0,
+        unitLabel: 'sheet',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Cut - Chipboard',
+        category: 'Laser Cutting',
+        type: 'material',
+        status: 'available',
+        description: 'Chipboard laser cutting. 18" × 24" × 0.125".',
+        priceType: 'fixed',
+        basePrice: 3.25,
+        pricePerUnit: 0,
+        unitLabel: 'sheet',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Cut - Corrugated Cardboard',
+        category: 'Laser Cutting',
+        type: 'material',
+        status: 'available',
+        description: 'Corrugated cardboard laser cutting. 18" × 24" × 0.15".',
+        priceType: 'fixed',
+        basePrice: 2.50,
+        pricePerUnit: 0,
+        unitLabel: 'sheet',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Laser Cut - Student Material',
+        category: 'Laser Cutting',
+        type: 'service',
+        status: 'available',
+        description: 'Laser cutting on student-supplied material. Material must be approved by staff first.',
+        priceType: 'fixed',
+        basePrice: 0,
+        pricePerUnit: 0,
+        unitLabel: 'cut',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+
+      // ==================== OTHER SERVICES ====================
       {
         name: 'PCB Fabrication',
         category: 'Electronics',
