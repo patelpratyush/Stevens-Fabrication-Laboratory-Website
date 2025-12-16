@@ -32,4 +32,4 @@ try {
   );
 }
 
-export { firebaseAuth, firebaseStorage };
+export { firebaseAuth, firebaseStorage, admin };

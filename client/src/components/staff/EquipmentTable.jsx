@@ -32,6 +32,9 @@ export default function EquipmentTable({ equipment, onEdit, onUpdateStatus }) {
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Image
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Equipment Name
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -54,6 +57,21 @@ export default function EquipmentTable({ equipment, onEdit, onUpdateStatus }) {
         <tbody className="bg-white divide-y divide-gray-200">
           {equipment.map((item) => (
             <tr key={item._id} className={!item.active ? 'bg-gray-50' : ''}>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {item.thumbUrl || item.imageUrl ? (
+                  <img
+                    src={item.thumbUrl || item.imageUrl}
+                    alt={item.name}
+                    className="h-12 w-12 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900">
                   {item.name}

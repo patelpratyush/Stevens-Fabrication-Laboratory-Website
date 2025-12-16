@@ -13,10 +13,16 @@ export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
     status: 'available',
     requiresTraining: false,
     notes: '',
+    imageUrl: '',
+    thumbUrl: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Populate form if editing
   useEffect(() => {
@@ -28,7 +34,12 @@ export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
         status: equipment.status || 'available',
         requiresTraining: equipment.requiresTraining || false,
         notes: equipment.notes || '',
+        imageUrl: equipment.imageUrl || '',
+        thumbUrl: equipment.thumbUrl || '',
       });
+      if (equipment.imageUrl) {
+        setImagePreview(equipment.imageUrl);
+      }
     }
   }, [equipment]);
 
@@ -38,6 +49,54 @@ export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+  }
+
+  function handleImageChange(e) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function clearImage() {
+    setImageFile(null);
+    setImagePreview('');
+    setUploadProgress(0);
+    setFormData((prev) => ({ ...prev, imageUrl: '', thumbUrl: '' }));
+  }
+
+  async function uploadImageToBackend(file) {
+    const formDataToSend = new FormData();
+    formDataToSend.append('image', file);
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
+
+    const response = await fetch('http://localhost:3001/api/upload/equipment-image', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formDataToSend,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to upload image');
+    }
+
+    const data = await response.json();
+    return {
+      imageUrl: data.imageUrl,
+      thumbUrl: data.thumbUrl,
+    };
   }
 
   async function handleSubmit(e) {
@@ -52,11 +111,22 @@ export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
 
     try {
       setLoading(true);
+
+      // Upload image if a new one is selected
+      if (imageFile) {
+        setUploadProgress(10);
+        const { imageUrl, thumbUrl } = await uploadImageToBackend(imageFile);
+        setUploadProgress(100);
+        formData.imageUrl = imageUrl;
+        formData.thumbUrl = thumbUrl;
+      }
+
       await onSubmit(formData);
     } catch (err) {
       setError(err.message || 'Failed to save equipment');
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -193,6 +263,57 @@ export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stevens-maroon"
                 placeholder="Additional information, specifications, or instructions"
               />
+            </div>
+
+            {/* Equipment Image */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Equipment Image
+              </label>
+              {imagePreview ? (
+                <div className="mb-3">
+                  <div className="relative inline-block">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="h-32 w-32 object-cover rounded-lg border-2 border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-stevens-maroon file:text-white
+                    hover:file:bg-stevens-maroon-dark
+                    file:cursor-pointer cursor-pointer"
+                />
+              )}
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="mt-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-stevens-maroon h-2 rounded-full transition-all"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Uploading and processing image...</p>
+                </div>
+              )}
             </div>
 
             {/* Buttons */}
