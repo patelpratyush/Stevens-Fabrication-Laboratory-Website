@@ -1,107 +1,140 @@
+import { auth } from './firebase';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-// Checkout API helpers
-export const checkoutsAPI = {
-  // Request checkout
-  async request(data) {
-    const token = localStorage.getItem('firebaseToken'); // You'll need to store this
-    const response = await fetch(`${API_URL}/api/checkouts/request`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
+/**
+ * Make authenticated API calls
+ * @param {string} endpoint - API endpoint (e.g., '/api/services')
+ * @param {Object} options - Fetch options
+ * @returns {Promise<Response>}
+ */
+export async function apiCall(endpoint, options = {}) {
+  try {
+    const user = auth.currentUser;
+    
+    // DEBUG: Log auth state
+    console.log('🔍 API Call Debug:', {
+      endpoint,
+      hasUser: !!user,
+      userEmail: user?.email,
+      uid: user?.uid
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to request checkout');
+    
+    // Get fresh token
+    const token = user ? await user.getIdToken() : null;
+    
+    console.log('🔑 Token:', token ? 'Token exists' : 'NO TOKEN');
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-
-    return response.json();
-  },
-
-  // Get my checkouts
-  async getMy() {
-    const token = localStorage.getItem('firebaseToken');
-    const response = await fetch(`${API_URL}/api/checkouts/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
     });
+    
+    return response;
+  } catch (error) {
+    console.error('API call error:', error);
+    throw error;
+  }
+}
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch checkouts');
-    }
+/**
+ * GET request helper
+ */
+export async function get(endpoint) {
+  const response = await apiCall(endpoint, { method: 'GET' });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  return response.json();
+}
 
-    return response.json();
-  },
-};
+/**
+ * POST request helper
+ */
+export async function post(endpoint, data) {
+  const response = await apiCall(endpoint, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  return response.json();
+}
 
-// Orders API helpers
-export const ordersAPI = {
-  // Create order
-  async create(orderData) {
-    const token = localStorage.getItem('firebaseToken');
-    const response = await fetch(`${API_URL}/api/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(orderData),
-    });
+/**
+ * PATCH request helper
+ */
+export async function patch(endpoint, data) {
+  const response = await apiCall(endpoint, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  return response.json();
+}
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create order');
-    }
+/**
+ * DELETE request helper
+ */
+export async function del(endpoint) {
+  const response = await apiCall(endpoint, { method: 'DELETE' });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Request failed');
+  }
+  return response.json();
+}
 
-    return response.json();
-  },
+// Specific API calls for common operations
 
-  // Get my orders
-  async getMy() {
-    const token = localStorage.getItem('firebaseToken');
-    const response = await fetch(`${API_URL}/api/orders/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch orders');
-    }
-
-    return response.json();
-  },
-};
-
-// Services API helpers
+// Services
 export const servicesAPI = {
-  // Get all services
-  async getAll() {
-    const response = await fetch(`${API_URL}/api/services`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch services');
-    }
-
-    return response.json();
-  },
+  getAll: () => get('/api/services'),
+  create: (data) => post('/api/services', data),
+  update: (id, data) => patch(`/api/services/${id}`, data),
+  delete: (id) => del(`/api/services/${id}`),
 };
 
-// Equipment API helpers
+// Equipment
 export const equipmentAPI = {
-  // Get all equipment
-  async getAll() {
-    const response = await fetch(`${API_URL}/api/equipment`);
+  getAll: () => get('/api/equipment'),
+  create: (data) => post('/api/equipment', data),
+  update: (id, data) => patch(`/api/equipment/${id}`, data),
+};
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch equipment');
-    }
+// Orders
+export const ordersAPI = {
+  getAll: () => get('/api/orders'),
+  getMy: () => get('/api/orders'),
+  create: (data) => post('/api/orders', data),
+  update: (id, data) => patch(`/api/orders/${id}`, data),
+};
 
-    return response.json();
-  },
+// Checkouts
+export const checkoutsAPI = {
+  getAll: (status) => get(`/api/checkouts${status ? `?status=${status}` : ''}`),
+  getMy: () => get('/api/checkouts/me'),
+  request: (data) => post('/api/checkouts/request', data),
+  approve: (id) => post(`/api/checkouts/${id}/approve`, {}),
+  deny: (id, reason) => post(`/api/checkouts/${id}/deny`, { reason }),
+  return: (id) => post(`/api/checkouts/${id}/return`, {}),
+  update: (id, data) => patch(`/api/checkouts/${id}`, data),
 };

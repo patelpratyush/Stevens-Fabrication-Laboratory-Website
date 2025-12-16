@@ -1,17 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatCurrency } from '@/utils/formatters';
-import { SERVICE_TYPES } from '@/utils/constants';
 
-export default function ServiceTable({ services, onEdit }) {
-  const [processingId, setProcessingId] = useState(null);
-
-  if (services.length === 0) {
+export default function StudentServiceTable({ services }) {
+  if (!services || services.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        No services available. Click "Add Service" to create one.
+        No services available.
       </div>
     );
   }
@@ -36,11 +32,9 @@ export default function ServiceTable({ services, onEdit }) {
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
           </tr>
         </thead>
+
         <tbody className="bg-white divide-y divide-gray-200">
           {services.map((service) => (
             <tr key={service._id}>
@@ -54,14 +48,17 @@ export default function ServiceTable({ services, onEdit }) {
                   </div>
                 )}
               </td>
+
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">{service.category}</div>
               </td>
+
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
                   {service.type}
                 </span>
               </td>
+
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">
                   {service.priceType === 'fixed' ? (
@@ -73,6 +70,7 @@ export default function ServiceTable({ services, onEdit }) {
                   )}
                 </div>
               </td>
+
               <td className="px-6 py-4 whitespace-nowrap">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -81,16 +79,14 @@ export default function ServiceTable({ services, onEdit }) {
                       : 'bg-yellow-100 text-yellow-800'
                   }`}
                 >
-                  {service.status === 'available' ? 'Available' : 'Under Maintenance'}
+                  {service.status === 'available'
+                    ? 'Available'
+                    : 'Under Maintenance'}
                 </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                <button
-                  onClick={() => onEdit(service)}
-                  className="text-stevens-maroon hover:text-stevens-maroon-dark"
-                >
-                  Edit
-                </button>
+
+                {/* If you prefer using your shared badge component instead, swap above for:
+                    <StatusBadge status={service.status} />
+                */}
               </td>
             </tr>
           ))}

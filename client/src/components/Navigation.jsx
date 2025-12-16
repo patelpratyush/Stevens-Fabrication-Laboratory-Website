@@ -6,20 +6,31 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, userProfile, role, logout, loading } = useAuth();
+  const { user, userProfile, logout } = useAuth();
 
-  // Define navigation based on role
+  // Determine which nav links to show based on role
   const getNavLinks = () => {
-    if (role === 'staff') {
+    if (!user) {
+      // Not logged in - public links
       return [
         { href: "/", label: "Home" },
-        { href: "/staff/dashboard", label: "Dashboard" },
-        { href: "/staff/equipment", label: "Equipment" },
-        { href: "/staff/catalog", label: "Catalog" },
+        { href: "/services", label: "Services" },
+        { href: "/price-calculator", label: "Price Calculator" },
       ];
     }
 
-    // Student/Public navigation
+    if (userProfile?.role === 'staff') {
+      // Staff navigation
+      return [
+        { href: "/staff/dashboard", label: "Dashboard" },
+        { href: "/staff/services", label: "Services" },
+        { href: "/staff/orders", label: "Orders" },
+        { href: "/staff/equipment", label: "Equipment" },
+        { href: "/staff/checkouts", label: "Checkouts" },
+      ];
+    }
+
+    // Student navigation (default)
     return [
       { href: "/", label: "Home" },
       { href: "/services", label: "Services" },
@@ -30,14 +41,14 @@ export default function Navigation() {
 
   const navLinks = getNavLinks();
 
-  const handleLogout = async () => {
+  async function handleLogout() {
     try {
       await logout();
       setMobileMenuOpen(false);
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
+  }
 
   return (
     <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,32 +82,30 @@ export default function Navigation() {
 
           {/* Auth Button */}
           <div className="ml-4 pl-4 border-l border-white/20">
-            {!loading && (
-              user ? (
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="text-white text-sm font-medium">
-                      {userProfile?.name || user.email}
-                    </p>
-                    <p className="text-white/60 text-xs capitalize">
-                      {role || 'student'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
-                  >
-                    Logout
-                  </button>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-white text-sm font-medium">
+                    {userProfile?.name || user.email}
+                  </p>
+                  <p className="text-white/60 text-xs capitalize">
+                    {userProfile?.role || 'student'}
+                  </p>
                 </div>
-              ) : (
-                <Link
-                  href="/login"
+                <button
+                  onClick={handleLogout}
                   className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
                 >
-                  Login
-                </Link>
-              )
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="px-6 py-2 bg-white text-stevens-maroon rounded-lg font-semibold hover:bg-gray-100 transition-all"
+              >
+                Login
+              </Link>
             )}
           </div>
         </div>
@@ -130,33 +139,31 @@ export default function Navigation() {
             </Link>
           ))}
           <div className="pt-2 border-t border-white/20">
-            {!loading && (
-              user ? (
-                <>
-                  <div className="px-4 py-2 text-white">
-                    <p className="text-sm font-medium">
-                      {userProfile?.name || user.email}
-                    </p>
-                    <p className="text-white/60 text-xs capitalize">
-                      {role || 'student'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center mt-2"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="block px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center"
-                  onClick={() => setMobileMenuOpen(false)}
+            {user ? (
+              <>
+                <div className="px-4 py-2 text-white">
+                  <p className="text-sm font-medium">
+                    {userProfile?.name || user.email}
+                  </p>
+                  <p className="text-white/60 text-xs capitalize">
+                    {userProfile?.role || 'student'}
+                  </p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center mt-2"
                 >
-                  Login
-                </Link>
-              )
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="block px-4 py-2 bg-white text-stevens-maroon rounded-lg font-semibold text-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
             )}
           </div>
         </div>
