@@ -1,78 +1,95 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { checkoutsAPI } from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-export function useCheckouts(status) {
+export function useCheckouts(filterStatus = null) {
   const [checkouts, setCheckouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { getIdToken } = useAuth();
 
   async function fetchCheckouts() {
     try {
       setLoading(true);
-      const token = await getIdToken();
-      const url = status
-        ? `${API_URL}/api/checkouts?status=${status}`
-        : `${API_URL}/api/checkouts`;
-
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch checkouts');
-      }
-
-      const data = await response.json();
-      setCheckouts(data.checkouts || []);
       setError(null);
+      const data = await checkoutsAPI.getAll(filterStatus);
+      setCheckouts(data.checkouts || []);
     } catch (err) {
       setError(err.message);
-      setCheckouts([]);
+      console.error('Error fetching checkouts:', err);
     } finally {
       setLoading(false);
     }
   }
 
+  async function requestCheckout(checkoutData) {
+    try {
+      const data = await checkoutsAPI.request(checkoutData);
+      await fetchCheckouts();
+      return data.checkout;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async function approveCheckout(id) {
+    try {
+      const data = await checkoutsAPI.approve(id);
+      await fetchCheckouts();
+      return data.checkout;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async function denyCheckout(id, reason) {
+    try {
+      const data = await checkoutsAPI.deny(id, reason);
+      await fetchCheckouts();
+      return data.checkout;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async function returnCheckout(id) {
+    try {
+      const data = await checkoutsAPI.return(id);
+      await fetchCheckouts();
+      return data.checkout;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
   useEffect(() => {
     fetchCheckouts();
-  }, [status]);
+  }, [filterStatus]);
 
-  return { checkouts, loading, error, refetch: fetchCheckouts };
+  return {
+    checkouts,
+    loading,
+    error,
+    refetch: fetchCheckouts,
+    requestCheckout,
+    approveCheckout,
+    denyCheckout,
+    returnCheckout,
+  };
 }
 
 export function useMyCheckouts() {
   const [checkouts, setCheckouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { getIdToken } = useAuth();
 
   async function fetchMyCheckouts() {
     try {
       setLoading(true);
-      const token = await getIdToken();
-      const response = await fetch(`${API_URL}/api/checkouts/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch your checkouts');
-      }
-
-      const data = await response.json();
-      setCheckouts(data.checkouts || []);
       setError(null);
+      const data = await checkoutsAPI.getMy();
+      setCheckouts(data.checkouts || []);
     } catch (err) {
       setError(err.message);
-      setCheckouts([]);
+      console.error('Error fetching my checkouts:', err);
     } finally {
       setLoading(false);
     }
@@ -82,5 +99,10 @@ export function useMyCheckouts() {
     fetchMyCheckouts();
   }, []);
 
-  return { checkouts, loading, error, refetch: fetchMyCheckouts };
+  return {
+    checkouts,
+    loading,
+    error,
+    refetch: fetchMyCheckouts,
+  };
 }

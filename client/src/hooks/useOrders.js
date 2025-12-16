@@ -1,95 +1,75 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { ordersAPI } from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
+// Staff hook - gets ALL orders
 export function useOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { getIdToken } = useAuth();
 
   async function fetchOrders() {
     try {
       setLoading(true);
-      const token = await getIdToken();
-      const response = await fetch(`${API_URL}/api/orders`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch orders');
-
-      const data = await response.json();
-      setOrders(data.orders || []);
       setError(null);
+      const data = await ordersAPI.getAll();
+      setOrders(data.orders || []);
     } catch (err) {
       setError(err.message);
-      setOrders([]);
+      console.error('Error fetching orders:', err);
     } finally {
       setLoading(false);
     }
   }
 
-  async function updateOrder(orderId, updates) {
-    const token = await getIdToken();
-
-    const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(updates),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || 'Failed to update order');
+  async function createOrder(orderData) {
+    try {
+      const data = await ordersAPI.create(orderData);
+      await fetchOrders();
+      return data.order;
+    } catch (err) {
+      throw new Error(err.message);
     }
+  }
 
-    const data = await res.json();
-
-    // update local UI immediately
-    setOrders((prev) =>
-      prev.map((o) =>
-        o._id === orderId ? { ...o, ...(data.order ?? updates) } : o
-      )
-    );
-
-    return data.order;
+  async function updateOrder(id, updates) {
+    try {
+      const data = await ordersAPI.update(id, updates);
+      await fetchOrders();
+      return data.order;
+    } catch (err) {
+      throw new Error(err.message);
+    }
   }
 
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  return { orders, loading, error, refetch: fetchOrders, updateOrder };
+  return {
+    orders,
+    loading,
+    error,
+    refetch: fetchOrders,
+    createOrder,
+    updateOrder,
+  };
 }
 
+// Student hook - gets only MY orders
 export function useMyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { getIdToken } = useAuth();
 
   async function fetchMyOrders() {
     try {
       setLoading(true);
-      const token = await getIdToken();
-      const response = await fetch(`${API_URL}/api/orders/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch your orders');
-
-      const data = await response.json();
-      setOrders(data.orders || []);
       setError(null);
+      const data = await ordersAPI.getMy();
+      setOrders(data.orders || []);
     } catch (err) {
       setError(err.message);
-      setOrders([]);
+      console.error('Error fetching my orders:', err);
     } finally {
       setLoading(false);
     }
@@ -99,5 +79,10 @@ export function useMyOrders() {
     fetchMyOrders();
   }, []);
 
-  return { orders, loading, error, refetch: fetchMyOrders };
+  return {
+    orders,
+    loading,
+    error,
+    refetch: fetchMyOrders,
+  };
 }

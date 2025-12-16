@@ -1,4 +1,5 @@
 import { connectToMongo, closeConnection } from '../config/mongoConnection.js';
+import { connectToRedis, closeRedisConnection, getRedisClient } from '../config/redisConnection.js';
 import { users, services, orders, equipment, checkouts } from '../config/mongoCollections.js';
 import { ObjectId } from 'mongodb';
 
@@ -11,7 +12,8 @@ const FIREBASE_UIDS = {
 async function seedDatabase() {
   try {
     await connectToMongo();
-    console.log('🌱 Starting database seed...\n');
+    await connectToRedis();
+    console.log(' Starting database seed...\n');
 
     // Clear existing data
     const usersCollection = await users();
@@ -27,6 +29,17 @@ async function seedDatabase() {
     await checkoutsCollection.deleteMany({});
 
     console.log(' Cleared existing data\n');
+    const redisClient = getRedisClient();
+
+if (redisClient && redisClient.isOpen) {
+  await redisClient.flushAll();
+  console.log('✓ Flushed Redis cache\n');
+}
+
+await closeRedisConnection();
+
+
+
 
     // ==================== SEED USERS ====================
     console.log(' Seeding users...');

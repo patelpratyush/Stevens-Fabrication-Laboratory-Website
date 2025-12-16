@@ -16,42 +16,95 @@ export default function StaffCheckoutsPage() {
 }
 
 function CheckoutsContent() {
-  const [activeTab, setActiveTab] = useState('pending'); // pending, active, history
+  const [activeTab, setActiveTab] = useState('pending');
   
-  // Fetch different checkout types
+  // Fetch checkouts with ALL functions
+  const hookResult = useCheckouts();
+  
+  console.log(' Hook result:', {
+    hasCheckouts: Array.isArray(hookResult.checkouts),
+    checkoutsCount: hookResult.checkouts?.length,
+    hasApprove: typeof hookResult.approveCheckout === 'function',
+    hasDeny: typeof hookResult.denyCheckout === 'function',
+    hasReturn: typeof hookResult.returnCheckout === 'function',
+  });
+  
   const { 
-    checkouts: allCheckouts, 
+    checkouts: allCheckouts = [],
     loading, 
     error, 
     refetch,
     approveCheckout,
     denyCheckout,
     returnCheckout
-  } = useCheckouts();
+  } = hookResult;
 
-  // Filter checkouts by tab and sort by date (oldest first)
+  // Filter checkouts by tab
   const pendingCheckouts = allCheckouts
     .filter(c => c.status === 'pending')
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Oldest first
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     
   const activeCheckouts = allCheckouts
     .filter(c => c.status === 'approved')
-    .sort((a, b) => new Date(b.checkoutDate || b.createdAt) - new Date(a.checkoutDate || a.createdAt)); // Newest first
+    .sort((a, b) => new Date(b.checkoutDate || b.createdAt) - new Date(a.checkoutDate || a.createdAt));
     
   const historyCheckouts = allCheckouts
     .filter(c => ['returned', 'denied'].includes(c.status))
-    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)); // Newest first
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
+  // Handler functions
   async function handleApprove(checkoutId) {
-    await approveCheckout(checkoutId);
+    console.log(' handleApprove called with:', checkoutId);
+    if (!approveCheckout) {
+      console.error(' approveCheckout is not defined!');
+      alert('Error: approveCheckout function is missing');
+      return;
+    }
+    try {
+      await approveCheckout(checkoutId);
+      console.log(' Approve succeeded');
+    } catch (error) {
+      console.error(' Approve failed:', error);
+      alert('Failed to approve: ' + error.message);
+    }
   }
 
   async function handleDeny(checkoutId, reason) {
-    await denyCheckout(checkoutId, reason);
+    console.log(' handleDeny called with:', checkoutId, reason);
+    if (!denyCheckout) {
+      console.error(' denyCheckout is not defined!');
+      alert('Error: denyCheckout function is missing');
+      return;
+    }
+    try {
+      await denyCheckout(checkoutId, reason);
+      console.log(' Deny succeeded');
+    } catch (error) {
+      console.error(' Deny failed:', error);
+      alert('Failed to deny: ' + error.message);
+    }
   }
 
   async function handleReturn(checkoutId) {
-    await returnCheckout(checkoutId);
+    console.log(' handleReturn called with:', checkoutId);
+    console.log(' returnCheckout exists?', !!returnCheckout);
+    console.log(' returnCheckout type:', typeof returnCheckout);
+    
+    if (!returnCheckout) {
+      console.error(' returnCheckout is not defined!');
+      console.error(' Hook result:', hookResult);
+      alert('Error: returnCheckout function is missing from useCheckouts hook');
+      return;
+    }
+    
+    try {
+      console.log('📞 Calling returnCheckout...');
+      await returnCheckout(checkoutId);
+      console.log(' Return succeeded');
+    } catch (error) {
+      console.error('Return failed:', error);
+      alert('Failed to mark as returned: ' + error.message);
+    }
   }
 
   // Get current tab's checkouts
@@ -108,7 +161,7 @@ function CheckoutsContent() {
           >
             Active Checkouts
             {activeCheckouts.length > 0 && (
-              <span className="ml-2 bg-green-100 text-green-800 py-0.5 px-2 rounded-full text-xs">
+              <span className="ml-2 bg-blue-100 text-blue-800 py-0.5 px-2 rounded-full text-xs">
                 {activeCheckouts.length}
               </span>
             )}
@@ -134,104 +187,34 @@ function CheckoutsContent() {
         <ErrorMessage message={error} onRetry={refetch} />
       ) : (
         <>
-          {/* Tab Content */}
-          {activeTab === 'pending' && (
-            <div>
-              <div className="mb-4 flex justify-between items-center">
-                <h2 className="text-xl font-semibold">
-                  Pending Requests ({pendingCheckouts.length})
-                </h2>
+          <div className="mb-6">
+            {currentCheckouts.length === 0 ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <p className="text-gray-500">
+                  {activeTab === 'pending' && 'No pending requests'}
+                  {activeTab === 'active' && 'No active checkouts'}
+                  {activeTab === 'history' && 'No checkout history'}
+                </p>
               </div>
-
-              {pendingCheckouts.length === 0 ? (
-                <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                  <p className="text-gray-500">No pending checkout requests</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Requests will appear here when students submit them
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {pendingCheckouts.map((checkout) => (
-                    <CheckoutApprovalCard
-                      key={checkout._id}
-                      checkout={checkout}
-                      onApprove={handleApprove}
-                      onDeny={handleDeny}
-                      onReturn={handleReturn}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'active' && (
-            <div>
-              <div className="mb-4 flex justify-between items-center">
-                <h2 className="text-xl font-semibold">
-                  Active Checkouts ({activeCheckouts.length})
-                </h2>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {currentCheckouts.map((checkout) => (
+                  <CheckoutApprovalCard
+                    key={checkout._id}
+                    checkout={checkout}
+                    onApprove={handleApprove}
+                    onDeny={handleDeny}
+                    onReturn={handleReturn}
+                  />
+                ))}
               </div>
-
-              {activeCheckouts.length === 0 ? (
-                <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                  <p className="text-gray-500">No active checkouts</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Approved checkouts will appear here
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activeCheckouts.map((checkout) => (
-                    <CheckoutApprovalCard
-                      key={checkout._id}
-                      checkout={checkout}
-                      onApprove={handleApprove}
-                      onDeny={handleDeny}
-                      onReturn={handleReturn}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'history' && (
-            <div>
-              <div className="mb-4 flex justify-between items-center">
-                <h2 className="text-xl font-semibold">
-                  Checkout History ({historyCheckouts.length})
-                </h2>
-              </div>
-
-              {historyCheckouts.length === 0 ? (
-                <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                  <p className="text-gray-500">No checkout history</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Returned and denied checkouts will appear here
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {historyCheckouts.map((checkout) => (
-                    <CheckoutApprovalCard
-                      key={checkout._id}
-                      checkout={checkout}
-                      onApprove={handleApprove}
-                      onDeny={handleDeny}
-                      onReturn={handleReturn}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </>
       )}
 
       {/* Summary Stats */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-2xl font-bold text-yellow-600">
             {pendingCheckouts.length}
@@ -240,17 +223,10 @@ function CheckoutsContent() {
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold text-blue-600">
             {activeCheckouts.length}
           </div>
           <div className="text-sm text-gray-600">Active Checkouts</div>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-red-600">
-            {activeCheckouts.filter(c => new Date(c.dueDate) < new Date()).length}
-          </div>
-          <div className="text-sm text-gray-600">Overdue</div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-4">

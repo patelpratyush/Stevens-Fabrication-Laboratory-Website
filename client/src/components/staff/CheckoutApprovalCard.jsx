@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDate, formatRelativeTime, formatDaysUntil } from '@/utils/formatters';
 
@@ -8,6 +8,17 @@ export default function CheckoutApprovalCard({ checkout, onApprove, onDeny, onRe
   const [showDenyModal, setShowDenyModal] = useState(false);
   const [denialReason, setDenialReason] = useState('');
   const [processing, setProcessing] = useState(false);
+
+  // DEBUG: Check if onReturn exists
+  useEffect(() => {
+    console.log('CheckoutApprovalCard props:', {
+      hasOnApprove: typeof onApprove === 'function',
+      hasOnDeny: typeof onDeny === 'function',
+      hasOnReturn: typeof onReturn === 'function',
+      checkoutId: checkout._id,
+      status: checkout.status
+    });
+  }, [onApprove, onDeny, onReturn, checkout]);
 
   async function handleApprove() {
     try {
@@ -41,11 +52,22 @@ export default function CheckoutApprovalCard({ checkout, onApprove, onDeny, onRe
   }
 
   async function handleReturn() {
+    console.log('handleReturn called');
+    console.log('onReturn type:', typeof onReturn);
+    console.log('onReturn value:', onReturn);
+    
+    if (!onReturn) {
+      alert('ERROR: onReturn function is not defined! Please check the parent component.');
+      return;
+    }
+
     if (!confirm('Mark this equipment as returned?')) return;
 
     try {
       setProcessing(true);
+      console.log('Calling onReturn with checkout ID:', checkout._id);
       await onReturn(checkout._id);
+      console.log('onReturn succeeded');
     } catch (error) {
       console.error('Return error:', error);
       alert('Failed to mark as returned: ' + error.message);
