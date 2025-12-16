@@ -1,34 +1,42 @@
 # Stevens Fabrication Laboratory Website
 
-Web application for the Stevens Fab Lab to manage service orders, equipment checkouts, and pricing. Replaces their current manual processes and third-party systems with an integrated platform.
+Web application for the Stevens Fab Lab to manage service orders, equipment checkouts, and pricing. Replaces their current manual  processes and third-party systems with an integrated platform.
 
 ## Team Members
+
 - Pratyush Patel - 20010352
 - Jasmine Cairns - 10458274
 - David Amin - 20013543
 
-## 📦 What's Included in This Submission
+## What's in This Project
 
-This submission includes:
-- ✅ Complete source code (frontend + backend)
-- ✅ `.env` files pre-configured (backend/.env.local and client/.env.local)
-- ✅ Firebase service account key (backend/config/serviceAccountKey.json)
-- ✅ Seed script (backend/scripts/seed.js) with comprehensive test data
-- ✅ All dependencies listed in package.json files
-- ✅ This README with complete setup and testing instructions
+So we're submitting:
 
-## Prerequisites
+- All the code (frontend and backend)
+- The `.env` files are included (backend/.env.local and client/.env.local)
+  - Usually these would be gitignored but we put them in so you can test it easily
+  - Has all the MongoDB, Redis, RabbitMQ, Mailtrap, and Firebase stuff already set up
+- Firebase service account key (backend/config/serviceAccountKey.json)
+  - Needed for backend auth, we included it so you don't have to set it up
+- Seed script (backend/scripts/seed.js) with some test data
+  - Makes 2 users, 25 services, 7 equipment items, 4 orders, 4 checkouts
+- All the dependencies in package.json
+- This README with setup instructions
 
-You must have the following installed on your system:
-- **Node.js v18+** (v25.2.1 recommended)
-- **MongoDB** (community edition)
-- **Redis** (latest version)
-- **RabbitMQ** (latest version)
-- **ImageMagick** (optional, for image processing - will fall back to Sharp if not available)
+Everything should be ready to go - just install stuff, run the seed, and start it up!
 
-### Installing Prerequisites
+## What You Need to Install
 
-**Mac (using Homebrew):**
+You'll need these things installed:
+
+- Node.js v18+ (we used v25.2.1)
+- MongoDB (community edition works fine)
+- Redis
+- RabbitMQ
+- ImageMagick (optional - if you don't have it, it'll use Sharp instead)
+
+### How to Install (Mac with Homebrew)
+
 ```bash
 brew install mongodb-community redis rabbitmq imagemagick
 brew services start mongodb-community
@@ -36,7 +44,8 @@ brew services start redis
 brew services start rabbitmq
 ```
 
-**Linux (Ubuntu/Debian):**
+### How to Install (Linux)
+
 ```bash
 sudo apt-get update
 sudo apt-get install mongodb redis-server rabbitmq-server imagemagick
@@ -45,80 +54,87 @@ sudo systemctl start redis
 sudo systemctl start rabbitmq-server
 ```
 
-### Verify Services are Running
+### Make Sure Everything is Running
 
 ```bash
-# Check MongoDB (should return connection info)
+# Check MongoDB
 mongosh --eval "db.version()"
 
-# Check Redis (should return PONG)
+# Check Redis (should say PONG)
 redis-cli ping
 
-# Check RabbitMQ (should show status)
+# Check RabbitMQ
 sudo rabbitmqctl status
 
-# Check ImageMagick (optional)
+# Check ImageMagick (if you installed it)
 convert -version
 ```
 
-## Installation & Setup
+## Setup Instructions
 
-### Step 1: Extract and Navigate to Project
+### Step 1: Get the Project
 
 ```bash
 unzip Stevens-Fabrication-Laboratory-Website.zip
 cd Stevens-Fabrication-Laboratory-Website
 ```
 
-### Step 2: Install Dependencies
+### Step 2: Install Everything
 
-Install root dependencies (for concurrently):
+First install root dependencies:
+
 ```bash
 npm install
 ```
 
-Install backend dependencies:
+Then backend:
+
 ```bash
 cd backend
 npm install
 cd ..
 ```
 
-Install client dependencies:
+Then frontend:
+
 ```bash
 cd client
 npm install
 cd ..
 ```
 
-### Step 3: Environment Configuration
+### Step 3: Environment Stuff
 
-**IMPORTANT:** The `.env` files are already included in this submission with working credentials.
+**Important:** We included all the `.env` files and Firebase credentials in the submission so you can test it right away. Normally you wouldn't commit these but we did it for grading purposes.
 
-- `backend/.env.local` - Backend environment variables (MongoDB, Redis, RabbitMQ, Mailtrap)
-- `client/.env.local` - Frontend environment variables (Firebase configuration)
-- `backend/config/serviceAccountKey.json` - Firebase Admin SDK credentials
+The files that are already set up:
 
-**No additional configuration is needed!** The files are pre-configured and ready to use.
+- `backend/.env.local` - Has MongoDB, Redis, RabbitMQ, Mailtrap, and Firebase config
+- `client/.env.local` - Frontend Firebase stuff
+- `backend/config/serviceAccountKey.json` - Firebase admin key for backend
+
+You don't need to change anything! Just install dependencies, seed the db, and run it.
 
 ### Step 4: Seed the Database
 
-Populate the database with test data (users, services, equipment, orders, checkouts):
+Run this to add some test data:
 
 ```bash
 cd backend
 npm run seed
 ```
 
-This will create:
-- 4 test users (1 staff, 3 students)
-- 7 services (3D printing, laser cutting, PCB fabrication, etc.)
-- 7 equipment items (available, checked out, maintenance states)
-- 4 sample orders (submitted, in-progress, completed statuses)
-- 5 checkout requests (pending, approved, denied, returned statuses)
+This creates:
 
-**Expected Output:**
-```
+- 4 users (1 staff, 3 students)
+- 7 services (3D printing, laser cutting, etc.)
+- 7 equipment items
+- 4 orders
+- 5 checkout requests
+
+You should see something like:
+
+```bash
 🌱 Starting database seed...
 ✓ Cleared existing data
 ✓ Seeding users...
@@ -134,22 +150,25 @@ This will create:
 ✓ Seed completed successfully!
 ```
 
-## Running the Application
+## How to Run It
 
-### Option 1: Using Concurrently (Recommended - One Command)
+### Easy Way (One Command)
 
-From the root directory:
+From the root directory just run:
+
 ```bash
 npm start
 ```
 
-This command runs all three components simultaneously:
-- Backend API server (port 3001)
-- Email worker (background process)
-- Frontend Next.js app (port 3000)
+This starts everything at once:
 
-**Expected Output:**
-```
+- Backend API (port 3001)
+- Email worker (runs in background)
+- Frontend (port 3000)
+
+You should see output like:
+
+```bash
 [0] ✓ MongoDB connected
 [0] ✓ Redis connected
 [0] ✓ RabbitMQ connected
@@ -160,267 +179,233 @@ This command runs all three components simultaneously:
 [2] - Local: http://localhost:3000
 ```
 
-### Option 2: Using Separate Terminals
+### Or Run Each Part Separately
 
-**Terminal 1 - Backend API:**
+If you want to run them in different terminals:
+
+**Terminal 1 - Backend:**
+
 ```bash
 cd backend
 npm start
 ```
 
 **Terminal 2 - Email Worker:**
+
 ```bash
 cd backend
 npm run worker
 ```
 
 **Terminal 3 - Frontend:**
+
 ```bash
 cd client
 npm run dev
 ```
 
-### Accessing the Application
+### Open It Up
 
-Once all services are running, open your browser and navigate to:
+Once everything is running, go to:
 
-**http://localhost:3000**
+**<http://localhost:3000>**
 
-## System Architecture
+## How It's Built
 
-The system has two main components:
+Basically two main parts:
 
-**Client** - Next.js React application providing the user interface (port 3000)
-**Backend** - Express.js API server interfacing with MongoDB, Redis, RabbitMQ, and Firebase (port 3001)
+**Frontend** - Next.js React app (runs on port 3000)
+**Backend** - Express API server that talks to MongoDB, Redis, RabbitMQ, and Firebase (port 3001)
 
-## Course Technologies
+## Technologies We Used
+
+### Course Requirements
 
 **Next.js**
-Frontend framework for building the single-page application with server-side rendering capabilities.
+Used for the frontend. Does server-side rendering and stuff.
 
 **Firebase**
-Handles user authentication (email/password) and stores uploaded design files (STL, PDF, etc.).
+Handles login (email/password) and stores uploaded files like STL and PDF files.
 
 **Redis**
-Caches frequently accessed data (services and equipment lists) to improve API response times.
+We use it to cache services and equipment lists so the API is faster.
 
-## Independent Technologies
+### Extra Technologies We Added
 
 **MongoDB**
-Primary database storing users, services, orders, equipment, and checkout records.
+Main database. Stores users, services, orders, equipment, and checkout stuff.
 
 **RabbitMQ**
-Message queue system that handles background email processing. When orders are created, messages are queued and processed by a separate worker process to send confirmation emails without blocking the API.
+Message queue for sending emails in the background. When someone creates an order, it queues up an email and a worker process sends it without slowing down the API.
 
 **ImageMagick**
-Command-line tool for image processing. Optimizes equipment photos and generates thumbnails. Falls back to Sharp (Node.js library) if ImageMagick is not installed.
+For processing images. Makes thumbnails and optimizes equipment photos. If you don't have it installed, it'll use Sharp instead (a Node.js library).
 
-## Test Users & Login Credentials
+## Test Users
 
-### Creating Test Users in Firebase
+### Setting Up Users in Firebase
 
-Before testing, create these users in Firebase Authentication:
+You need to create these users in Firebase before you can test:
 
 1. Go to [Firebase Console](https://console.firebase.google.com/project/stevens-fabrication-laboratory/authentication/users)
 2. Click "Add User"
-3. Create these 2 users:
+3. Create these accounts:
 
-**Staff Account:**
+**Staff:**
+
 - Email: `staff@stevens.edu`
 - Password: `password123`
 
-**Student Account:**
+**Student:**
+
 - Email: `student@stevens.edu`
 - Password: `password123`
 
-## Testing Guide
+## How to Test It
 
-### 1. Testing Order Flow
+### 1. Testing Orders
 
 **As a Student:**
+
 1. Log in with `student@stevens.edu`
-2. Navigate to "Services" page
-3. Click on a service (e.g., "PLA 3D Print")
-4. Enter quantity (e.g., 100 grams)
-5. Add notes (optional)
+2. Go to "Services" page
+3. Click on a service like "PLA 3D Print"
+4. Enter quantity (like 100 grams)
+5. Add notes if you want
 6. Click "Submit Order"
-7. You should see order confirmation with order number (e.g., FAB-241213-1430-A7B2)
-8. Navigate to "My Orders" to see your order with status "submitted"
+7. You should see a confirmation with an order number (looks like FAB-241213-1430-A7B2)
+8. Go to "My Orders" to see your order with "submitted" status
 
 **As Staff:**
+
 1. Log in with `staff@stevens.edu`
-2. Navigate to "Orders" page
-3. You should see all pending orders including the one you just created
-4. Click on an order to view details
-5. Update status to "in-progress"
-6. Work on the order...
-7. Update status to "ready" when complete
-8. Student will see updated status in their "My Orders" page
+2. Go to "Orders" page
+3. You should see all the orders including the one you just made
+4. Click on an order to see details
+5. Change status to "in-progress"
+6. Do the work...
+7. Change status to "ready" when done
+8. The student will see the updated status in their "My Orders"
 
-**Testing Email Notifications:**
-- When an order is created, check the Mailtrap inbox at https://mailtrap.io
-- You should see a confirmation email sent to the staff email address
+**Email Testing:**
 
-### 2. Testing Equipment Checkout Flow
+- When someone creates an order, check Mailtrap at <https://mailtrap.io>
+- You should see an email sent to the staff email
+
+### 2. Testing Equipment Checkout
 
 **As a Student:**
+
 1. Log in with `student@stevens.edu`
-2. Navigate to "Equipment" page
-3. Find an available piece of equipment (green badge)
+2. Go to "Equipment" page
+3. Find something available (has a green badge)
 4. Click "Request Checkout"
-5. Select a due date
-6. Add notes explaining why you need it
-7. Submit the request
-8. Navigate to "My Checkouts" to see status "pending"
+5. Pick a due date
+6. Add notes about why you need it
+7. Submit
+8. Go to "My Checkouts" to see it's "pending"
 
 **As Staff:**
+
 1. Log in with `staff@stevens.edu`
-2. Navigate to "Checkouts" page
-3. View pending checkout requests
-4. Click "Approve" or "Deny" with reason
-5. If approved:
-   - Equipment status changes to "checked_out"
-   - Student can see "approved" status
-   - Equipment no longer available for others
-6. When student returns equipment:
+2. Go to "Checkouts" page
+3. See all the pending requests
+4. Click "Approve" or "Deny" (add a reason if denying)
+5. If you approve:
+   - Equipment becomes "checked_out"
+   - Student sees "approved" status
+   - Other people can't check it out anymore
+6. When student returns it:
    - Click "Mark as Returned"
-   - Equipment status changes back to "available"
+   - Equipment goes back to "available"
 
 ### 3. Testing Equipment Management
 
 **As Staff:**
+
 1. Log in with `staff@stevens.edu`
-2. Navigate to "Equipment" page
+2. Go to "Equipment" page
 3. Click "Add Equipment"
-4. Fill in details:
+4. Fill out the form:
    - Name: Test Equipment
    - Category: 3D Printing
    - Location: Fab Lab - Station 1
    - Status: Available
    - Requires Training: Yes/No
-   - Notes: Any additional info
-5. Upload an image (optional - tests ImageMagick processing)
+   - Notes: whatever
+5. Upload an image if you want (tests ImageMagick)
 6. Click "Create Equipment"
-7. New equipment appears in list
-8. Test quick status changes:
-   - Click "Mark Maintenance" to take offline
-   - Click "Mark Available" to bring back online
-9. Test editing equipment details
+7. Should show up in the list
+8. Try changing status:
+   - "Mark Maintenance" to take it offline
+   - "Mark Available" to bring it back
+9. Try editing equipment details too
 
-**Testing Image Processing:**
-1. When adding/editing equipment, upload an image
-2. Backend processes with ImageMagick (or Sharp fallback):
-   - Creates optimized version (max 1200px)
-   - Creates thumbnail (300x300px)
-3. Check that thumbnail loads quickly in:
+**Image Processing:**
+
+1. When you add/edit equipment with an image, the backend processes it
+2. Uses ImageMagick (or Sharp if ImageMagick isn't installed):
+   - Makes an optimized version (max 1200px)
+   - Makes a thumbnail (300x300px)
+3. Check that thumbnails load fast in:
    - Equipment list (staff view)
    - Equipment cards (student view)
 
 ### 4. Testing Redis Caching
 
-Redis caches frequently accessed data to improve performance:
+Redis caches stuff to make it faster:
 
-**To test caching:**
-1. Make first request to `/api/services` (cache miss - hits MongoDB)
-2. Check terminal logs: "Cache miss: services"
-3. Make second request to `/api/services` (cache hit - from Redis)
-4. Check terminal logs: "Cache hit: services"
-5. Cache expires after 5 minutes or when data is updated
+**How to test:**
 
-**Same for equipment:**
+1. Make a request to `/api/services` (first time - cache miss, hits MongoDB)
+2. Check terminal - should say "Cache miss: services"
+3. Make another request to `/api/services` (should be cache hit from Redis)
+4. Check terminal - should say "Cache hit: services"
+5. Cache expires after 5 minutes or when you update data
+
+**Same thing for equipment:**
+
 1. First request to `/api/equipment` - cache miss
-2. Subsequent requests - cache hit
-3. When staff adds/edits equipment, cache is invalidated
+2. Next requests - cache hit
+3. When staff adds/edits equipment, cache gets cleared
 
-### 5. Testing RabbitMQ Email Processing
+### 5. Testing RabbitMQ Email Stuff
 
-RabbitMQ handles background email sending:
+RabbitMQ sends emails in the background:
 
 **To test:**
-1. Student creates an order
+
+1. Have a student create an order
 2. Check terminal logs:
-   - Backend: "Publishing order confirmation to queue"
-   - Worker: "Processing order confirmation email"
-   - Worker: "Order confirmation email sent"
-3. Check Mailtrap inbox for email
-4. If worker is not running, messages queue up in RabbitMQ
-5. When worker starts, it processes all queued messages
+   - Backend should say "Publishing order confirmation to queue"
+   - Worker should say "Processing order confirmation email"
+   - Worker should say "Order confirmation email sent"
+3. Check Mailtrap for the email
+4. If the worker isn't running, messages will queue up in RabbitMQ
+5. When you start the worker, it processes all the queued messages
 
-### 6. Viewing Sample Data
+### 6. Sample Data
 
-The seed script creates sample data you can explore:
+The seed script makes some test data you can look at:
 
 **Orders:**
-- 2 submitted orders (waiting for staff action)
-- 1 in-progress order (being worked on)
-- 1 completed order (ready for pickup)
+
+- 2 submitted (waiting for staff)
+- 1 in-progress (being worked on)
+- 1 completed (ready to pick up)
 
 **Equipment:**
-- 3 available items (can be checked out)
-- 1 checked out item (in use)
-- 1 maintenance item (unavailable)
+
+- 3 available (can checkout)
+- 1 checked out (in use)
+- 1 maintenance (unavailable)
 
 **Checkouts:**
-- 2 pending requests (waiting for approval)
-- 1 approved checkout (student has equipment)
-- 1 returned checkout (completed)
-- 1 denied checkout (with reason)
 
-## Troubleshooting
-
-### Port Already in Use
-```bash
-# Kill process on port 3001 (backend)
-lsof -ti:3001 | xargs kill -9
-
-# Kill process on port 3000 (frontend)
-lsof -ti:3000 | xargs kill -9
-```
-
-### MongoDB Connection Error
-```bash
-# Verify MongoDB is running
-brew services list | grep mongodb
-# or
-sudo systemctl status mongodb
-
-# Start MongoDB if not running
-brew services start mongodb-community
-# or
-sudo systemctl start mongodb
-```
-
-### Redis Connection Error
-```bash
-# Verify Redis is running
-redis-cli ping  # Should return PONG
-
-# Start Redis if not running
-brew services start redis
-# or
-sudo systemctl start redis
-```
-
-### RabbitMQ Connection Error
-```bash
-# Verify RabbitMQ is running
-sudo rabbitmqctl status
-
-# Start RabbitMQ if not running
-brew services start rabbitmq
-# or
-sudo systemctl start rabbitmq-server
-```
-
-### Firebase Authentication Error
-- Ensure users are created in Firebase Authentication
-- Check that Firebase credentials in client/.env.local are correct
-- Verify serviceAccountKey.json exists in backend/config/
-
-### Email Not Sending
-- Verify email worker is running (Terminal 2 or in concurrently output)
-- Check Mailtrap credentials in backend/.env.local
-- View queued messages: `sudo rabbitmqctl list_queues`
+- 2 pending (waiting for approval)
+- 1 approved (student has it)
+- 1 returned (done)
+- 1 denied (with reason)
 
 ## Additional Documentation
 

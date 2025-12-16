@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { SERVICE_CATEGORIES, EQUIPMENT_STATUSES } from '@/utils/constants';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
   const isEditing = !!equipment;
+  const { getIdToken } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -74,12 +76,13 @@ export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
     const formDataToSend = new FormData();
     formDataToSend.append('image', file);
 
-    const token = localStorage.getItem('token');
+    const token = await getIdToken();
     if (!token) {
       throw new Error('Authentication token not found');
     }
 
-    const response = await fetch('http://localhost:3001/api/upload/equipment-image', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/upload/equipment-image`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
