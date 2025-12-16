@@ -82,7 +82,15 @@ export default function OrderManagementCard({ order, onUpdateStatus }) {
             <p className="text-xs font-medium text-gray-700">Files:</p>
             <div className="mt-1 space-y-1">
               {order.files.map((file, idx) => (
-                <p key={idx} className="text-xs text-blue-600">📎 {file}</p>
+                <a
+                  key={idx}
+                  href={file.url || file}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline block"
+                >
+                  📎 {typeof file === 'string' ? file : file.name || `File ${idx + 1}`}
+                </a>
               ))}
             </div>
           </div>

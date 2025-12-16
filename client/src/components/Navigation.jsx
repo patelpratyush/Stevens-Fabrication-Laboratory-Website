@@ -14,8 +14,8 @@ export default function Navigation() {
       // Not logged in - public links
       return [
         { href: "/", label: "Home" },
-        { href: "/services", label: "Services" },
-        { href: "/price-calculator", label: "Price Calculator" },
+        { href: "/general-services-page", label: "Services" },
+        { href: "/general-equipment-page", label: "Equipment" },
       ];
     }
 
@@ -32,7 +32,7 @@ export default function Navigation() {
 
     // Student navigation (default)
     return [
-      { href: "/", label: "Home" },
+      { href: "/dashboard", label: "Dashboard" },
       { href: "/services", label: "Services" },
       { href: "/equipment", label: "Equipment" },
       { href: "/orders", label: "Orders" },

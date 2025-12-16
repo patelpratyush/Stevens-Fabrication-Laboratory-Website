@@ -16,14 +16,10 @@ export function useOrders() {
       setLoading(true);
       const token = await getIdToken();
       const response = await fetch(`${API_URL}/api/orders`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
+      if (!response.ok) throw new Error('Failed to fetch orders');
 
       const data = await response.json();
       setOrders(data.orders || []);
@@ -36,11 +32,40 @@ export function useOrders() {
     }
   }
 
+  async function updateOrder(orderId, updates) {
+    const token = await getIdToken();
+
+    const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updates),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || 'Failed to update order');
+    }
+
+    const data = await res.json();
+
+    // update local UI immediately
+    setOrders((prev) =>
+      prev.map((o) =>
+        o._id === orderId ? { ...o, ...(data.order ?? updates) } : o
+      )
+    );
+
+    return data.order;
+  }
+
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  return { orders, loading, error, refetch: fetchOrders };
+  return { orders, loading, error, refetch: fetchOrders, updateOrder };
 }
 
 export function useMyOrders() {
@@ -54,14 +79,10 @@ export function useMyOrders() {
       setLoading(true);
       const token = await getIdToken();
       const response = await fetch(`${API_URL}/api/orders/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch your orders');
-      }
+      if (!response.ok) throw new Error('Failed to fetch your orders');
 
       const data = await response.json();
       setOrders(data.orders || []);

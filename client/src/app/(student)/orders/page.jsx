@@ -4,22 +4,32 @@ import { useState } from 'react';
 import { useServices } from '@/hooks/useServices';
 import { useMyOrders } from '@/hooks/useOrders';
 import { useAuth } from '@/contexts/AuthContext';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
-import ErrorMessage from '@/components/shared/ErrorMessage';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDate, formatCurrency } from '@/utils/formatters';
-
+import { StudentOnly } from '@/components/shared/ProtectedRoute';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function OrdersPage() {
+
+    return (
+    <StudentOnly staffRedirect="/staff/orders">
+      <OrdersContent />
+    </StudentOnly>
+  );
+}
+function OrdersContent() {
   const { services, loading: servicesLoading } = useServices();
   const { orders, loading: ordersLoading, refetch: refetchOrders } = useMyOrders();
-  const { getIdToken } = useAuth();
+  const { user } = useAuth();
 
   // Cart state
   const [cart, setCart] = useState([]);
   const [orderNotes, setOrderNotes] = useState('');
   const [files, setFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
@@ -29,19 +39,17 @@ export default function OrdersPage() {
     const existingItem = cart.find(item => item.serviceId === service._id);
 
     if (existingItem) {
-      // Increment quantity
       setCart(cart.map(item =>
         item.serviceId === service._id
           ? { ...item, quantity: item.quantity + 1 }
           : item
       ));
     } else {
-      // Add new item
       setCart([...cart, {
         serviceId: service._id,
         serviceName: service.name,
-        pricePerUnit: service.pricePerUnit,
-        unitLabel: service.unitLabel,
+        pricePerUnit: service.pricePerUnit || service.basePrice || 0,
+        unitLabel: service.unitLabel || 'unit',
         quantity: 1,
       }]);
     }
@@ -69,6 +77,7 @@ export default function OrdersPage() {
   // Handle file selection
   function handleFileChange(e) {
     const selectedFiles = Array.from(e.target.files || []);
+    console.log('📎 Files selected:', selectedFiles);
     setFiles(selectedFiles);
   }
 
@@ -87,8 +96,73 @@ export default function OrdersPage() {
     return acc;
   }, {});
 
+  // Upload files to Firebase Storage
+  async function uploadFiles(files) {
+    console.log('Starting file upload...', { fileCount: files.length, user: user?.uid });
+    
+    if (!files || files.length === 0) {
+      console.log('No files to upload');
+      return [];
+    }
+
+    if (!user || !user.uid) {
+      console.error('No user UID available');
+      throw new Error('User not authenticated');
+    }
+
+    const uploadPromises = files.map((file, index) => {
+      return new Promise((resolve, reject) => {
+        const timestamp = Date.now();
+        const fileName = `${timestamp}-${file.name}`;
+        const filePath = `orders/${user.uid}/${fileName}`;
+        
+        console.log(`📤 Uploading file ${index + 1}/${files.length}:`, { fileName, filePath, size: file.size });
+        
+        const storageRef = ref(storage, filePath);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            console.log(`Upload progress for ${file.name}: ${progress}%`);
+            setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
+          },
+          (error) => {
+            console.error(`Upload error for ${file.name}:`, error);
+            reject(error);
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              console.log(`Upload complete for ${file.name}:`, downloadURL);
+              
+              resolve({
+                url: downloadURL,
+                name: file.name,
+                size: file.size,
+                type: file.type,
+              });
+            } catch (error) {
+              console.error(`Error getting download URL for ${file.name}:`, error);
+              reject(error);
+            }
+          }
+        );
+      });
+    });
+
+    const results = await Promise.all(uploadPromises);
+    console.log('All files uploaded successfully:', results);
+    return results;
+  }
+
   // Submit order
   async function handleSubmitOrder() {
+    console.log('🚀 Starting order submission...');
+    
     if (cart.length === 0) {
       setSubmitError('Please add at least one item to your cart');
       return;
@@ -97,24 +171,30 @@ export default function OrdersPage() {
     try {
       setSubmitting(true);
       setSubmitError('');
+      setUploadProgress({});
 
-      // Upload files to Firebase Storage (simplified - you'll need to implement this)
-      const fileUrls = await uploadFiles(files);
+      // Upload files to Firebase Storage
+      console.log('Uploading files...', files);
+      const uploadedFiles = await uploadFiles(files);
+      console.log('Files uploaded:', uploadedFiles);
 
       // Prepare order data
       const orderData = {
         items: cart.map(item => ({
           serviceId: item.serviceId,
+          serviceName: item.serviceName,
           quantity: item.quantity,
           unitPrice: item.pricePerUnit,
           lineTotal: item.pricePerUnit * item.quantity,
         })),
-        files: fileUrls,
+        files: uploadedFiles,
         notes: orderNotes,
       };
 
+      console.log('Submitting order:', orderData);
+
       // Submit order
-      const token = await getIdToken();
+      const token = await user.getIdToken();
       const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: {
@@ -126,38 +206,30 @@ export default function OrdersPage() {
 
       if (!response.ok) {
         const data = await response.json();
+        console.error('Order submission failed:', data);
         throw new Error(data.error || 'Failed to submit order');
       }
 
       const result = await response.json();
+      console.log('Order submitted successfully:', result);
 
       // Success!
       setSubmitSuccess(`Order ${result.order.orderNumber} submitted successfully!`);
       setCart([]);
       setOrderNotes('');
       setFiles([]);
+      setUploadProgress({});
       await refetchOrders();
 
       // Clear success message after 5 seconds
       setTimeout(() => setSubmitSuccess(''), 5000);
 
     } catch (error) {
+      console.error('❌ Order submission error:', error);
       setSubmitError(error.message);
     } finally {
       setSubmitting(false);
     }
-  }
-
-  // Simplified file upload (you'll need to implement Firebase Storage)
-  async function uploadFiles(files) {
-    // TODO: Implement Firebase Storage upload
-    // For now, return empty array
-    return files.map(file => ({
-      url: 'https://example.com/placeholder',
-      name: file.name,
-      sizeBytes: file.size,
-      mimeType: file.type,
-    }));
   }
 
   return (
@@ -208,9 +280,9 @@ export default function OrdersPage() {
                             </div>
                             <div className="text-right">
                               <p className="font-semibold text-stevens-maroon text-sm">
-                                {formatCurrency(service.pricePerUnit)}
+                                {formatCurrency(service.pricePerUnit || service.basePrice || 0)}
                               </p>
-                              <p className="text-xs text-gray-500">per {service.unitLabel}</p>
+                              <p className="text-xs text-gray-500">per {service.unitLabel || 'unit'}</p>
                             </div>
                           </div>
                           {service.description && (
@@ -324,12 +396,13 @@ export default function OrdersPage() {
                 {/* File Upload */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Upload Design Files (Optional)
+                    Upload Design Files
                   </label>
                   <input
                     type="file"
                     multiple
                     onChange={handleFileChange}
+                    accept=".pdf,.stl,.svg,.ai,.dxf,.png,.jpg,.jpeg"
                     className="w-full text-sm text-gray-500
                       file:mr-4 file:py-2 file:px-4
                       file:rounded file:border-0
@@ -339,9 +412,18 @@ export default function OrdersPage() {
                       file:cursor-pointer cursor-pointer"
                   />
                   {files.length > 0 && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      {files.length} file(s) selected
-                    </p>
+                    <div className="mt-2 space-y-1">
+                      {files.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600 truncate">{file.name}</span>
+                          {uploadProgress[file.name] !== undefined && (
+                            <span className="text-stevens-maroon ml-2">
+                              {uploadProgress[file.name]}%
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -378,17 +460,12 @@ export default function OrdersPage() {
                   {submitting ? 'Submitting...' : 'Submit Order'}
                 </button>
 
-                {/* Pricing Notes */}
-                <div className="mt-6 pt-6 border-t">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Pricing Notes
-                  </h3>
-                  <ul className="text-xs text-gray-600 space-y-1">
-                    <li>• Prices shown are base rates</li>
-                    <li>• Additional fees may apply for complex designs</li>
-                    <li>• Rush orders incur a 25% surcharge</li>
-                    <li>• Contact staff for bulk discounts</li>
-                  </ul>
+                {/* Debug Info */}
+                <div className="mt-4 p-3 bg-gray-100 rounded text-xs">
+                  <p className="font-semibold mb-1">Debug Info:</p>
+                  <p>Files selected: {files.length}</p>
+                  <p>User UID: {user?.uid || 'Not available'}</p>
+                  <p>Storage available: {storage ? 'Yes' : 'No'}</p>
                 </div>
               </>
             )}

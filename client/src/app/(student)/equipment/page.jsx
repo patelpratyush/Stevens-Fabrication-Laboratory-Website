@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { StudentOnly } from '@/components/shared/ProtectedRoute';
 import { useEquipment } from '@/hooks/useEquipment';
 import { useMyCheckouts } from '@/hooks/useCheckouts';
 import { checkoutsAPI } from '@/lib/api';
@@ -12,6 +13,14 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDate, formatDaysUntil } from '@/utils/formatters';
 
 export default function EquipmentPage() {
+  return (
+    <StudentOnly staffRedirect="/staff/equipment">
+      <EquipmentContent />
+    </StudentOnly>
+  );
+}
+
+function EquipmentContent() {
   const { equipment, loading: equipmentLoading, error: equipmentError, refetch: refetchEquipment } = useEquipment();
   const { checkouts, loading: checkoutsLoading, refetch: refetchCheckouts } = useMyCheckouts();
   const [selectedEquipment, setSelectedEquipment] = useState(null);

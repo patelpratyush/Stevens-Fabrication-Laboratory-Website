@@ -7,28 +7,48 @@ dotenv.config();
 // Create Mailtrap transporter
 const transporter = nodemailer.createTransport({
   host: process.env.MAILTRAP_HOST || "sandbox.smtp.mailtrap.io",
-  port: parseInt(process.env.MAILTRAP_PORT) || 2525,
+  port: parseInt(process.env.MAILTRAP_PORT || "2525", 10),
   auth: {
     user: process.env.MAILTRAP_USER,
     pass: process.env.MAILTRAP_PASS,
   },
 });
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function sendWithRetry(fn, label, attempts = 3, baseDelayMs = 6000) {
+  let lastErr;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await fn();
+      console.log(`✓ ${label} (attempt ${i}/${attempts})`);
+      return true;
+    } catch (e) {
+      lastErr = e;
+      console.error(
+        `❌ ${label} failed (attempt ${i}/${attempts}):`,
+        e?.response || e?.message || e
+      );
+      // Backoff: baseDelay, 2x, 3x...
+      await sleep(baseDelayMs * i);
+    }
+  }
+
+  console.error(`🛑 ${label} failed after ${attempts} attempts:`, lastErr?.response || lastErr?.message || lastErr);
+  return false;
+}
+
 async function sendConfirmationEmail(order) {
   const itemsList = order.items
     .map((item) => {
       const material = item.materialName ? ` (${item.materialName})` : "";
-      return `<li>${item.serviceName}${material} - Qty: ${
-        item.quantity
-      } - $${item.lineTotal.toFixed(2)}</li>`;
+      return `<li>${item.serviceName}${material} - Qty: ${item.quantity} - $${item.lineTotal.toFixed(2)}</li>`;
     })
     .join("");
 
   const filesList =
     order.files && order.files.length > 0
-      ? `<h3>Uploaded Files:</h3><ul>${order.files
-          .map((f) => `<li>${f.name}</li>`)
-          .join("")}</ul>`
+      ? `<h3>Uploaded Files:</h3><ul>${order.files.map((f) => `<li>${f.name}</li>`).join("")}</ul>`
       : "";
 
   const html = `
@@ -40,9 +60,7 @@ async function sendConfirmationEmail(order) {
       <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h2 style="margin-top: 0;">Order #${order.orderNumber}</h2>
         <p><strong>Status:</strong> Submitted</p>
-        <p><strong>Date:</strong> ${new Date(
-          order.createdAt
-        ).toLocaleString()}</p>
+        <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
       </div>
 
       <h3>Order Details:</h3>
@@ -78,9 +96,7 @@ async function sendStaffNotification(order) {
   const itemsList = order.items
     .map((item) => {
       const material = item.materialName ? ` (${item.materialName})` : "";
-      return `<li>${item.serviceName}${material} - Qty: ${
-        item.quantity
-      } - $${item.lineTotal.toFixed(2)}</li>`;
+      return `<li>${item.serviceName}${material} - Qty: ${item.quantity} - $${item.lineTotal.toFixed(2)}</li>`;
     })
     .join("");
 
@@ -97,12 +113,8 @@ async function sendStaffNotification(order) {
 
       <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h2 style="margin-top: 0;">Order #${order.orderNumber}</h2>
-        <p><strong>Customer:</strong> ${order.user.name} (${
-    order.user.email
-  })</p>
-        <p><strong>Date:</strong> ${new Date(
-          order.createdAt
-        ).toLocaleString()}</p>
+        <p><strong>Customer:</strong> ${order.user.name} (${order.user.email})</p>
+        <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
         <p><strong>Total:</strong> $${order.totalPrice.toFixed(2)}</p>
       </div>
 
@@ -141,28 +153,48 @@ async function startWorker() {
     console.log("✓ Email worker connected to RabbitMQ");
     console.log("Waiting for orders on queue: orders.created...");
 
-    // Consume messages
     channel.consume("orders.created", async (msg) => {
       if (!msg) return;
 
       try {
         const order = JSON.parse(msg.content.toString());
-        console.log(`Processing order ${order.orderNumber}...`);
+        const staffTo = process.env.STAFF_EMAIL || "fablab@stevens.edu";
 
-        // Send both emails
-        await sendConfirmationEmail(order);
-        console.log(`  ✓ Confirmation sent to ${order.user.email}`);
+        console.log(`Processing order ${order.orderNumber}`);
 
-        await sendStaffNotification(order);
-        console.log(`  ✓ Staff notification sent`);
+        // 1) Student email (retry)
+        const studentOk = await sendWithRetry(
+          () => sendConfirmationEmail(order),
+          `Student email to ${order.user.email}`,
+          3,
+          6000
+        );
 
-        // Acknowledge message
+        // Extra cooldown before staff email (Mailtrap rate limit safety)
+        await sleep(10000);
+
+        // 2) Staff email (separate retry)
+        const staffOk = await sendWithRetry(
+          () => sendStaffNotification(order),
+          `Staff email to ${staffTo}`,
+          3,
+          12000
+        );
+
+        // IMPORTANT: ACK no matter what so we don't loop forever.
         channel.ack(msg);
-        console.log(`✓ Order ${order.orderNumber} processed successfully\n`);
-      } catch (error) {
-        console.error("Error processing message:", error);
-        // Reject and requeue if there's an error
-        channel.nack(msg, false, true);
+
+        if (!studentOk || !staffOk) {
+          console.warn(
+            `Order ${order.orderNumber} processed but some emails failed (studentOk=${studentOk}, staffOk=${staffOk})`
+          );
+        } else {
+          console.log(`Order ${order.orderNumber} fully processed\n`);
+        }
+      } catch (err) {
+        console.error("Bad message / JSON parse error:", err);
+        // Drop poison message
+        channel.nack(msg, false, false);
       }
     });
 

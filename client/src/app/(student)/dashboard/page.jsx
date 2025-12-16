@@ -9,8 +9,18 @@ import { useMyCheckouts } from '@/hooks/useCheckouts';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDate, formatCurrency, formatRelativeTime } from '@/utils/formatters';
+import { RequireAuth } from '@/components/shared/ProtectedRoute';
 
 export default function DashboardPage() {
+
+  return (
+    <RequireAuth>
+      <DashboardContent />
+    </RequireAuth>
+  );
+}
+function DashboardContent() {
+
   const { userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
 
