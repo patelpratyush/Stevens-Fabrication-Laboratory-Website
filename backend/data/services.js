@@ -3,7 +3,10 @@ import { services } from "../config/mongoCollections.js";
 
 export async function getAllActiveServices() {
   const servicesCollection = await services();
-  return await servicesCollection.find({ active: true }).toArray();
+  return await servicesCollection.find({
+    active: true,
+    status: 'available'  // Only show services that are both active AND available (not in maintenance)
+  }).toArray();
 }
 
 export async function getAllServices() {
