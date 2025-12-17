@@ -87,13 +87,18 @@ export default function CheckoutApprovalCard({ checkout, onApprove, onDeny, onRe
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-gray-900">
-                Equipment ID: {checkout.equipmentId?.toString().slice(-8) || 'Unknown'}
+                {checkout.equipmentName || `Equipment ID: ${checkout.equipmentId?.toString().slice(-8) || 'Unknown'}`}
               </h3>
               <StatusBadge type="checkout" status={checkout.status} />
             </div>
             <p className="text-sm text-gray-600">
-              Student: {checkout.firebaseUid?.slice(0, 12)}...
+              Student: {checkout.studentName || checkout.studentEmail || checkout.firebaseUid}
             </p>
+            {checkout.equipmentCategory && (
+              <p className="text-xs text-gray-500">
+                Category: {checkout.equipmentCategory}
+              </p>
+            )}
           </div>
         </div>
 

@@ -1,38 +1,77 @@
 import { ObjectId } from "mongodb";
-import { checkouts, equipment } from "../config/mongoCollections.js";
+import { checkouts, equipment, users } from "../config/mongoCollections.js";
+
+// Helper function to build aggregation pipeline for populating equipment and user data
+const buildPopulatePipeline = (matchStage = {}) => {
+  return [
+    { $match: matchStage },
+    {
+      $lookup: {
+        from: "equipment",
+        localField: "equipmentId",
+        foreignField: "_id",
+        as: "equipmentData"
+      }
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "firebaseUid",
+        foreignField: "firebaseUid",
+        as: "userData"
+      }
+    },
+    {
+      $addFields: {
+        equipmentName: { $arrayElemAt: ["$equipmentData.name", 0] },
+        equipmentCategory: { $arrayElemAt: ["$equipmentData.category", 0] },
+        studentName: { $arrayElemAt: ["$userData.name", 0] },
+        studentEmail: { $arrayElemAt: ["$userData.email", 0] }
+      }
+    },
+    {
+      $project: {
+        equipmentData: 0,
+        userData: 0
+      }
+    },
+    { $sort: { createdAt: -1 } }
+  ];
+};
 
 export async function getAllCheckouts() {
   const checkoutsCollection = await checkouts();
-  return await checkoutsCollection.find({}).sort({ createdAt: -1 }).toArray();
+  return await checkoutsCollection.aggregate(buildPopulatePipeline()).toArray();
 }
 
 export async function getPendingCheckouts() {
   const checkoutsCollection = await checkouts();
   return await checkoutsCollection
-    .find({ status: "pending" })
-    .sort({ createdAt: -1 })
+    .aggregate(buildPopulatePipeline({ status: "pending" }))
     .toArray();
 }
 
 export async function getApprovedCheckouts() {
   const checkoutsCollection = await checkouts();
-  return await checkoutsCollection
-    .find({ status: "approved" })
-    .sort({ checkoutDate: -1 })
-    .toArray();
+  const pipeline = buildPopulatePipeline({ status: "approved" });
+  // Override sort for approved checkouts to use checkoutDate instead of createdAt
+  pipeline[pipeline.length - 1] = { $sort: { checkoutDate: -1 } };
+  return await checkoutsCollection.aggregate(pipeline).toArray();
 }
 
 export async function getCheckoutsByUser(firebaseUid) {
   const checkoutsCollection = await checkouts();
   return await checkoutsCollection
-    .find({ firebaseUid })
-    .sort({ createdAt: -1 })
+    .aggregate(buildPopulatePipeline({ firebaseUid }))
     .toArray();
 }
 
 export async function getCheckoutById(checkoutId) {
   const checkoutsCollection = await checkouts();
-  return await checkoutsCollection.findOne({ _id: new ObjectId(checkoutId) });
+  const result = await checkoutsCollection
+    .aggregate(buildPopulatePipeline({ _id: new ObjectId(checkoutId) }))
+    .toArray();
+  return result.length > 0 ? result[0] : null;
 }
 
 // Student creates checkout request (pending status)

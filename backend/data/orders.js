@@ -1,22 +1,51 @@
 import { ObjectId } from "mongodb";
-import { orders, services } from "../config/mongoCollections.js";
+import { orders, services, users } from "../config/mongoCollections.js";
+
+// Helper function to build aggregation pipeline for populating user data
+const buildPopulatePipeline = (matchStage = {}) => {
+  return [
+    { $match: matchStage },
+    {
+      $lookup: {
+        from: "users",
+        localField: "firebaseUid",
+        foreignField: "firebaseUid",
+        as: "userData"
+      }
+    },
+    {
+      $addFields: {
+        studentName: { $arrayElemAt: ["$userData.name", 0] },
+        studentEmail: { $arrayElemAt: ["$userData.email", 0] }
+      }
+    },
+    {
+      $project: {
+        userData: 0
+      }
+    },
+    { $sort: { createdAt: -1 } }
+  ];
+};
 
 export async function getAllOrders() {
   const ordersCollection = await orders();
-  return await ordersCollection.find({}).sort({ createdAt: -1 }).toArray();
+  return await ordersCollection.aggregate(buildPopulatePipeline()).toArray();
 }
 
 export async function getOrdersByUser(firebaseUid) {
   const ordersCollection = await orders();
   return await ordersCollection
-    .find({ firebaseUid })
-    .sort({ createdAt: -1 })
+    .aggregate(buildPopulatePipeline({ firebaseUid }))
     .toArray();
 }
 
 export async function getOrderById(orderId) {
   const ordersCollection = await orders();
-  return await ordersCollection.findOne({ _id: new ObjectId(orderId) });
+  const result = await ordersCollection
+    .aggregate(buildPopulatePipeline({ _id: new ObjectId(orderId) }))
+    .toArray();
+  return result.length > 0 ? result[0] : null;
 }
 
 export async function createOrder(firebaseUid, userId, orderData) {

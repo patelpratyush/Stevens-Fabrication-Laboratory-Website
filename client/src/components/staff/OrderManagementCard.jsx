@@ -31,7 +31,7 @@ export default function OrderManagementCard({ order, onUpdateStatus }) {
               {order.orderNumber}
             </h3>
             <p className="text-sm text-gray-600">
-              Student: {order.firebaseUid?.slice(0, 12)}...
+              Student: {order.studentName || order.studentEmail || order.firebaseUid}
             </p>
           </div>
           <StatusBadge type="order" status={order.status} />
