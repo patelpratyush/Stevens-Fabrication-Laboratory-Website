@@ -18,8 +18,8 @@ So we're submitting:
   - Has all the MongoDB, Redis, RabbitMQ, Mailtrap, and Firebase stuff already set up
 - Firebase service account key (backend/config/serviceAccountKey.json)
   - Needed for backend auth, we included it so you don't have to set it up
-- Seed script (backend/scripts/seed.js) with some test data
-  - Makes 2 users, 25 services, 7 equipment items, 4 orders, 4 checkouts
+- Seed script (backend/scripts/seed.js) with test data
+  - Makes 2 users (1 staff, 1 student), 25 services, 7 equipment items, 4 orders, 4 checkouts
 - All the dependencies in package.json
 - This README with setup instructions
 
@@ -126,11 +126,11 @@ npm run seed
 
 This creates:
 
-- 4 users (1 staff, 3 students)
-- 7 services (3D printing, laser cutting, etc.)
+- 2 users (1 staff, 1 student)
+- 25 services (3D printing, laser cutting, laser printing, etc.)
 - 7 equipment items
 - 4 orders
-- 5 checkout requests
+- 4 checkout requests
 
 You should see something like:
 
@@ -138,15 +138,15 @@ You should see something like:
 🌱 Starting database seed...
 ✓ Cleared existing data
 ✓ Seeding users...
-  Created 4 users
+  Created 2 users
 ✓ Seeding services...
-  Created 7 services
+  Created 25 services
 ✓ Seeding equipment...
   Created 7 equipment items
 ✓ Seeding orders...
   Created 4 orders
 ✓ Seeding checkouts...
-  Created 5 checkouts
+  Created 4 checkouts
 ✓ Seed completed successfully!
 ```
 
@@ -402,7 +402,7 @@ The seed script makes some test data you can look at:
 
 **Checkouts:**
 
-- 2 pending (waiting for approval)
+- 1 pending (waiting for approval)
 - 1 approved (student has it)
 - 1 returned (done)
 - 1 denied (with reason)
